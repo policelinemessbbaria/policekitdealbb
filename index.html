@@ -113,7 +113,8 @@
                 <div id="bannerDots" class="absolute bottom-3 left-0 right-0 flex justify-center space-x-2 px-4"></div>
             </div>
 
-            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-5 text-white mb-6 shadow-md">
+            <!-- NOTICE BOARD CONTAINER -->
+            <div id="noticeBoardContainer" class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-5 text-white mb-6 shadow-md">
                 <h2 class="text-xl font-bold mb-1">স্বাগতম আমাদের কমিউনিটি মার্কেটে!</h2>
                 <p class="text-xs opacity-90">১ কিলোমিটার এরিয়ার মধ্যে কর্মীদের অভ্যন্তরীণ কেনাবেচা ও এক্সচেঞ্জ প্ল্যাটফর্ম।</p>
             </div>
@@ -561,6 +562,15 @@
                     appData = res.data;
                     document.getElementById('siteName').innerText = appData.settings.sitename || 'Classifieds';
                     if (appData.settings.logourl) document.getElementById('siteLogo').src = appData.settings.logourl;
+                    
+                    // NOTICE BOARD LOGIC: Update content if exists
+                    if (appData.settings.noticeboard_content) {
+                        const noticeBoard = document.getElementById('noticeBoardContainer');
+                        if (noticeBoard) {
+                            noticeBoard.innerHTML = appData.settings.noticeboard_content;
+                        }
+                    }
+
                     initBannerSlider();
                     if(appData.popups && appData.popups.length > 0) showPopup(appData.popups[0]);
                     renderCategories();

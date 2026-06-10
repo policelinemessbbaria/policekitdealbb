@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- PHP কোড সরিয়ে ডিফল্ট নাম দেওয়া হয়েছে -->
     <title>PoliceKitDealBB</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -52,7 +51,7 @@
 </head>
 <body>
 
-    <!-- UPDATED HEADER WITH SKELETON LOADER -->
+    <!-- HEADER WITH SKELETON LOADER -->
     <header class="bg-white shadow-sm sticky top-0 z-50 px-4 py-3 flex justify-between items-center gap-2">
         
         <!-- HEADER SKELETON (Visible initially) -->
@@ -64,7 +63,6 @@
         <!-- REAL HEADER CONTENT (Hidden initially) -->
         <div id="realHeaderContent" class="flex items-center space-x-2 shrink-0 hidden">
             <img id="siteLogo" src="" alt="Logo" class="h-8 object-contain">
-            <!-- PHP কোড সরিয়ে ডিফল্ট টেক্সট দেওয়া হয়েছে, JS এর মাধ্যমে আপডেট হবে -->
             <span id="siteName" class="text-lg font-bold text-gray-800 hidden sm:block">Policekitdealbb</span>
         </div>
         
@@ -87,7 +85,7 @@
 
     <main class="max-w-md mx-auto px-4 py-4">
 
-        <!-- SKELETON LOADER SECTION (Visible on Load) -->
+        <!-- SKELETON LOADER SECTION (Visible on Load if no cache) -->
         <section id="skeletonLoader" class="view-section active">
             <div class="w-full aspect-video rounded-xl mb-6 skeleton"></div>
             <div class="h-20 rounded-2xl mb-6 skeleton"></div>
@@ -138,7 +136,6 @@
         <section id="productDetailView" class="view-section">
             
             <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
-                <!-- aspect-square for square ratio -->
                 <div class="relative bg-gray-100 aspect-square">
                     <img id="detailImgMain" src="" alt="Product" class="w-full h-full object-cover">
                     <span id="detailBadge" class="absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-md shadow-sm bg-gray-200 text-gray-600 hidden"></span>
@@ -261,7 +258,6 @@
                 <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col justify-center items-center">
                     <h3 id="dashName" class="font-bold text-gray-800 text-lg"></h3>
                     <p id="dashEmail" class="text-xs text-gray-500 mb-1"></p>
-                    <!-- Mobile Number -->
                     <p id="dashMobile" class="text-xs text-gray-500"></p>
                     <button onclick="confirmLogout()" class="mt-3 text-red-500 font-semibold text-xs border border-red-100 px-4 py-1.5 rounded-xl hover:bg-red-50 w-full"><i class="fa-solid fa-right-from-bracket mr-1"></i>লগআউট</button>
                 </div>
@@ -277,7 +273,7 @@
                     </div>
                 </div>
 
-                <!-- NEW: MY REQUESTS DRAWER SECTION -->
+                <!-- MY REQUESTS DRAWER SECTION -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div onclick="toggleMyRequests()" class="p-4 cursor-pointer select-none hover:bg-gray-50 transition duration-200 flex justify-between items-center">
                         <h4 class="font-bold text-gray-800"><i class="fa-solid fa-hand-holding-heart text-indigo-600 mr-1"></i> আমার রিকোয়েস্টসমূহ (My Requests)</h4>
@@ -287,8 +283,6 @@
                         <div id="myRequestsList" class="space-y-3"></div>
                     </div>
                 </div>
-                <!-- END NEW SECTION -->
-                
             </div>
         </section>
 
@@ -381,7 +375,6 @@
     // ============================================================
     // VERCEL/NETLIFY HOSTING HELPER (POLYFILL FOR GOOGLE.SCRIPT.RUN)
     // ============================================================
-    // নিচে আপনার Google Apps Script-এর বর্তমান Web App URL-টি বসিয়ে দিন:
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzbAYocRD3HJLiykJaFcnZt4zpLienf6Ov8M5qvrDbLeZ3oNNIkgy3gky8tssi2MXiI/exec"; 
 
     if (typeof google === 'undefined' || !google.script) {
@@ -409,7 +402,6 @@
                             }
 
                             return function(...args) {
-                                // Vercel থেকে Apps Script-এ ডাটা পাঠানোর জন্য Fetch API
                                 fetch(GAS_WEB_APP_URL, {
                                     method: 'POST',
                                     mode: 'cors',
@@ -440,8 +432,6 @@
         };
     }
     
-    // আপনার বাকি সব জাভাস্ক্রিপ্ট কোড (যেমন: loadProducts, checkLogin ইত্যাদি) এর নিচ থেকে শুরু হবে...
-
         let appData = { settings: {}, categories: [], products: [], banners: [], popups: [], policies: {} };
         let currentUser = JSON.parse(localStorage.getItem('user')) || null;
         let sessionToken = localStorage.getItem('sessionToken') || null;
@@ -455,7 +445,7 @@
 
         // CACHING VARIABLES
         let cachedUserAds = [];
-        let cachedUserRequests = []; // NEW VARIABLE FOR REQUESTS
+        let cachedUserRequests = []; 
 
         let currentSlide = 0; let slideInterval; let touchStartX = 0; let touchEndX = 0;
 
@@ -463,7 +453,6 @@
             loadInitialData();
             updateAuthUI();
             
-            // Search Input Logic
             const searchInput = document.getElementById('searchInput');
             searchInput.addEventListener('input', (e) => {
                 const clearBtn = document.getElementById('searchClearBtn');
@@ -498,7 +487,6 @@
             if (activeNav) activeNav.classList.add('nav-active');
             window.scrollTo(0, 0);
             if (viewId === 'accountView' && currentUser) {
-                // Reset drawers to closed state when entering account view
                 document.getElementById('myAdsListContainer').classList.add('hidden');
                 document.getElementById('myAdsArrow').classList.remove('fa-chevron-up');
                 document.getElementById('myAdsArrow').classList.add('fa-chevron-down');
@@ -554,71 +542,119 @@
         function closeAdTypeModal() { document.getElementById('adTypeModal').classList.add('hidden'); }
 
         // ============================================
-        // SMART DATA LOADING WITH BROWSER CACHE & SERVER VERSION CHECK
+        // OPTIMISTIC UI: INSTANT LOAD + BACKGROUND SYNC
         // ============================================
         function loadInitialData() {
-            // Step 1: Get Server Version First (Lightweight call)
-            google.script.run.withSuccessHandler(handleVersionCheck).getServerVersion();
-        }
-
-        function handleVersionCheck(serverVersion) {
-            const localVersion = localStorage.getItem('cached_app_version');
-
-            if (localVersion && localVersion === serverVersion) {
-                // Version Matches -> Use LocalStorage (Super Fast)
-                const localData = localStorage.getItem('cached_app_data');
-                if (localData) {
+            // 1. INSTANT LOAD: Try to load from LocalStorage First
+            const localData = localStorage.getItem('cached_app_data');
+            
+            if (localData) {
+                try {
                     appData = JSON.parse(localData);
-                    initializeAppUI(true);
-                } else {
-                    // Cache empty despite version match (edge case), fetch fresh
-                    fetchAndCacheData();
+                    
+                    // স্কেলেটন লুকানো এবং হোম ভিউ দেখানো (ইনস্ট্যান্ট)
+                    document.getElementById('skeletonLoader').classList.remove('active');
+                    document.getElementById('homeView').classList.add('active');
+                    document.getElementById('headerSkeleton').classList.add('hidden');
+                    document.getElementById('realHeaderContent').classList.remove('hidden');
+                    
+                    // UI এ ডাটা বসানো
+                    updateUIWithCurrentData();
+                    
+                    console.log("✅ Loaded from Local Cache Instantly (0ms Latency)");
+                } catch (e) {
+                    console.error("❌ Local Cache Corrupted:", e);
+                    // যদি লোকাল ডাটা নষ্ট থাকে, তবে স্কেলেটন দেখাও
+                    document.getElementById('skeletonLoader').classList.add('active');
                 }
             } else {
-                // Version Mismatch or First Visit -> Fetch Fresh Data
-                fetchAndCacheData();
+                // যদি কোনো লোকাল ডাটা না থাকে, তবে স্কেলেটন দেখাবে
+                document.getElementById('skeletonLoader').classList.add('active');
             }
+
+            // 2. BACKGROUND SYNC: Check server version asynchronously
+            google.script.run.withSuccessHandler(handleVersionCheckAsync).getServerVersion();
         }
 
-        function fetchAndCacheData() {
-            google.script.run.withSuccessHandler(res => {
-                if (res.success) {
-                    appData = res.data;
-                    // Update Browser Cache
-                    localStorage.setItem('cached_app_data', JSON.stringify(res.data));
-                    localStorage.setItem('cached_app_version', res.version);
-                    
-                    initializeAppUI(true);
-                } else { 
-                    initializeAppUI(false, res.error); 
-                }
-            }).withFailureHandler(err => { 
-                initializeAppUI(false, err); 
-            }).getInitialData();
-        }
+        // ভার্সন চেক হ্যান্ডলার
+        function handleVersionCheckAsync(serverVersion) {
+            const localVersion = localStorage.getItem('cached_app_version');
+            const localData = localStorage.getItem('cached_app_data');
 
-        // Common UI Initialization Function
-        function initializeAppUI(isSuccess, errorMsg = null) {
-            document.getElementById('skeletonLoader').classList.remove('active');
-            document.getElementById('homeView').classList.add('active');
-            document.getElementById('headerSkeleton').classList.add('hidden');
-            document.getElementById('realHeaderContent').classList.remove('hidden');
-
-            if (!isSuccess) {
-                Swal.fire({ icon: 'error', title: 'ত্রুটি', text: 'ডাটা লোড করতে ব্যর্থ: ' + errorMsg }); 
+            // কেস ক: যদি লোকালে কোনো ডাটাই না থাকে -> ব্লকিং মোডে ডাটা আনতে হবে
+            if (!localData) {
+                fetchAndCacheData(false); // false = blocking mode (show loader)
                 return;
             }
 
-            // --- FIX: ডায়নামিক টাইটেল আপডেট ---
+            // কেস খ: যদি ভার্সন মিলে না -> ব্যাকগ্রাউন্ডে আপডেট করতে হবে
+            if (localVersion !== serverVersion) {
+                console.log(`🔄 Update Detected! Local: ${localVersion}, Server: ${serverVersion}`);
+                fetchAndCacheData(true); // true = background mode (silent update)
+            } else {
+                console.log("✅ App is up to date.");
+            }
+        }
+
+        // ডাটা আনার ফাংশনটি আপডেট করা (isBackground প্যারামিটার যোগ করা হয়েছে)
+        function fetchAndCacheData(isBackground = false) {
+            // যদি ব্যাকগ্রাউন্ড না হয়, তবেই লোডার দেখাবে। ব্যাকগ্রাউন্ডে লোডার লাগবে না।
+            if (!isBackground) showLoader(true);
+
+            google.script.run.withSuccessHandler(res => {
+                if (!isBackground) showLoader(false);
+
+                if (res.success) {
+                    appData = res.data;
+                    localStorage.setItem('cached_app_data', JSON.stringify(res.data));
+                    localStorage.setItem('cached_app_version', res.version);
+                    
+                    if (isBackground) {
+                        // সাইলেন্ট আপডেট: লোডার ছাড়াই UI রিফ্রেশ করুন
+                        refreshCurrentView();
+                        
+                        // ইউজারকে জানানো যে ডাটা আপডেট হয়েছে (অপশনাল)
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                            didOpen: (toast) => { toast.addEventListener('mouseenter', Swal.stopTimer); toast.addEventListener('mouseleave', Swal.resumeTimer); }
+                        });
+                        Toast.fire({ icon: 'success', title: 'নতুন ডাটা আপডেট হয়েছে' });
+                        
+                    } else {
+                        // ব্লকিং লোড: প্রথমবার লোড হওয়ার পর ইনিশিয়ালাইজ করুন
+                        initializeAppUI(true);
+                    }
+                } else {
+                    // যদি ব্যাকগ্রাউন্ডে এরর আসে, ইউজার যাতে বিরক্ত না হয় তাই কনসোলে লগ করবে
+                    if (!isBackground) { 
+                        initializeAppUI(false, res.error); 
+                    } else {
+                        console.error("Background Update Failed:", res.error);
+                    }
+                }
+            }).withFailureHandler(err => { 
+                if (!isBackground) { 
+                    initializeAppUI(false, err); 
+                }
+            }).getInitialData();
+        }
+
+        // ============================================
+        // UI REFRESH HELPERS
+        // ============================================
+
+        // যখন ইনিশিয়াল লোড হবে (অথবা লোকাল ক্যাশ থেকে)
+        function updateUIWithCurrentData() {
             if (appData.settings.sitename) {
                 document.title = appData.settings.sitename;
                 document.getElementById('siteName').innerText = appData.settings.sitename;
             }
-            // ----------------------------------
-
             if (appData.settings.logourl) document.getElementById('siteLogo').src = appData.settings.logourl;
             
-            // NOTICE BOARD LOGIC: Update content if exists
             if (appData.settings.noticeboard_content) {
                 const noticeBoard = document.getElementById('noticeBoardContainer');
                 if (noticeBoard) {
@@ -633,8 +669,48 @@
             populateCategoryDropdown();
             applyFilters(); 
         }
+
+        // যখন ব্যাকগ্রাউন্ডে আপডেট হবে (সাইলেন্টলি)
+        function refreshCurrentView() {
+            // ব্যানার আপডেট করুন
+            initBannerSlider();
+            
+            // নোটিশ বোর্ড আপডেট করুন
+            if (appData.settings.noticeboard_content) {
+                const noticeBoard = document.getElementById('noticeBoardContainer');
+                if (noticeBoard) {
+                    noticeBoard.innerHTML = appData.settings.noticeboard_content;
+                }
+            }
+
+            // ক্যাটাগরি আপডেট করুন
+            renderCategories();
+            
+            // ফিল্টার এবং প্রোডাক্ট আপডেট করুন
+            renderAdTypeFilters();
+            applyFilters(); // এটি স্বয়ংক্রিয়ভাবে renderProducts কল করবে
+            
+            console.log("UI Refreshed Silently");
+        }
+
+        // পুরাতন ইনিশিয়ালাইজার (শুধুমাত্র এরর হ্যান্ডলিং এবং ব্লকিং লোডের জন্য)
+        function initializeAppUI(isSuccess, errorMsg = null) {
+            // লোডার লুকানো
+            document.getElementById('skeletonLoader').classList.remove('active');
+            document.getElementById('homeView').classList.add('active');
+            document.getElementById('headerSkeleton').classList.add('hidden');
+            document.getElementById('realHeaderContent').classList.remove('hidden');
+
+            if (!isSuccess) {
+                Swal.fire({ icon: 'error', title: 'ত্রুটি', text: 'ডাটা লোড করতে ব্যর্থ: ' + errorMsg }); 
+                return;
+            }
+
+            // সফল হলে UI আপডেট করুন
+            updateUIWithCurrentData();
+        }
         // ============================================
-        // END CACHING LOGIC
+        // END OPTIMISTIC UI LOGIC
         // ============================================
 
         function performSearch() {
@@ -910,14 +986,12 @@
             if(images.length > 1) { images.forEach(imgUrl => { thumbsContainer.innerHTML += `<img src="${imgUrl}" onclick="document.getElementById('detailImgMain').src='${imgUrl}'" class="w-10 h-10 object-cover border border-white rounded shadow-md cursor-pointer">`; }); }
 
             // --- মালিকানা (Owner) চেক করা ---
-            // যদি বর্তমান ইউজার এই প্রোডাক্টের বিক্রেতা হন
             if (currentUser && product.sellerid && currentUser.userid === product.sellerid) {
-                btnRequest.disabled = true; // বাটন ডিজেবল করা
+                btnRequest.disabled = true;
                 btnRequest.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'shadow-md');
                 btnRequest.classList.add('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
                 btnRequestText.innerText = "নিজের বিজ্ঞাপন";
             } else {
-                // অন্য ইউজার হলে ক্লিক ইভেন্ট যোগ করা
                 btnRequest.onclick = () => handleInterestRequest(product.id);
             }
             // -----------------------------------
@@ -928,16 +1002,12 @@
         function handleInterestRequest(productId) {
             if (!currentUser) { Swal.fire({ icon: 'warning', title: 'লগইন প্রয়োজন', text: 'আগ্রহ প্রকাশ করতে দয়া করে প্রথমে লগইন করুন।', confirmButtonColor: '#2563eb' }); showView('accountView'); return; }
             
-            // Frontend Limit Check (Optional, just for UI feedback before server check)
-            // However, requirement says Backend checks it. We will rely on backend error.
-            
             Swal.fire({ title: 'আপনি কি নিশ্চিত?', text: "আপনি কি নিশ্চিত যে আপনি এই পণ্যটি কিনতে বা এক্সচেঞ্জ করতে আগ্রহী?", icon: 'question', showCancelButton: true, confirmButtonColor: '#2563eb', cancelButtonColor: '#d33', confirmButtonText: 'হ্যাঁ, পাঠাব', cancelButtonText: 'না' }).then((result) => {
                 if (result.isConfirmed) {
                     showLoader(true);
                     google.script.run.withSuccessHandler(res => { 
                         showLoader(false); 
                         if (res.success) {
-                            // Clear Request Cache
                             cachedUserRequests = [];
                             Swal.fire({ icon: 'success', title: 'সফল!', text: res.message, timer: 2000, showConfirmButton: false }); 
                         } else { 
@@ -1067,7 +1137,7 @@ function generatePlaceholderImage(text) {
                         cachedUserAds = []; 
                         Swal.fire({ icon: 'success', title: 'সফল!', text: res.message, timer: 2000, showConfirmButton: false });
                         document.getElementById('adForm').reset();
-                        ['imgPre1','imgPre2','imgPre3'].forEach(id => { document.getElementById(id).classList.add('hidden'); document.getElementById(id).src = ''; });
+                        ['imgPre1','imgPre2','imgPre3'].forEach(id => document.getElementById(id).classList.add('hidden'));
                         ['imgPlaceholder1','imgPlaceholder2','imgPlaceholder3'].forEach(id => document.getElementById(id).style.display = 'block');
                         selectedAdType = 'sell'; showView('homeView');
                     } else { Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.error }); }

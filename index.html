@@ -382,7 +382,7 @@
     // VERCEL/NETLIFY HOSTING HELPER (POLYFILL FOR GOOGLE.SCRIPT.RUN)
     // ============================================================
     // নিচে আপনার Google Apps Script-এর বর্তমান Web App URL-টি বসিয়ে দিন:
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwmkzgsz-GBljsujIrv1-JrJ3lZ_M-ijiUSvHDvtfsW2bMoFTJCGsXbIV2qIHMfTNcA/exec"; 
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzbAYocRD3HJLiykJaFcnZt4zpLienf6Ov8M5qvrDbLeZ3oNNIkgy3gky8tssi2MXiI/exec"; 
 
     if (typeof google === 'undefined' || !google.script) {
         window.google = {
@@ -553,54 +553,89 @@
 
         function closeAdTypeModal() { document.getElementById('adTypeModal').classList.add('hidden'); }
 
+        // ============================================
+        // SMART DATA LOADING WITH BROWSER CACHE & SERVER VERSION CHECK
+        // ============================================
         function loadInitialData() {
+            // Step 1: Get Server Version First (Lightweight call)
+            google.script.run.withSuccessHandler(handleVersionCheck).getServerVersion();
+        }
+
+        function handleVersionCheck(serverVersion) {
+            const localVersion = localStorage.getItem('cached_app_version');
+
+            if (localVersion && localVersion === serverVersion) {
+                // Version Matches -> Use LocalStorage (Super Fast)
+                const localData = localStorage.getItem('cached_app_data');
+                if (localData) {
+                    appData = JSON.parse(localData);
+                    initializeAppUI(true);
+                } else {
+                    // Cache empty despite version match (edge case), fetch fresh
+                    fetchAndCacheData();
+                }
+            } else {
+                // Version Mismatch or First Visit -> Fetch Fresh Data
+                fetchAndCacheData();
+            }
+        }
+
+        function fetchAndCacheData() {
             google.script.run.withSuccessHandler(res => {
-                document.getElementById('skeletonLoader').classList.remove('active');
-                document.getElementById('homeView').classList.add('active');
-                document.getElementById('headerSkeleton').classList.add('hidden');
-                document.getElementById('realHeaderContent').classList.remove('hidden');
-                
                 if (res.success) {
                     appData = res.data;
+                    // Update Browser Cache
+                    localStorage.setItem('cached_app_data', JSON.stringify(res.data));
+                    localStorage.setItem('cached_app_version', res.version);
                     
-                    // --- FIX: ডায়নামিক টাইটেল আপডেট ---
-                    if (appData.settings.sitename) {
-                        document.title = appData.settings.sitename;
-                        document.getElementById('siteName').innerText = appData.settings.sitename;
-                    }
-                    // ----------------------------------
-
-                    if (appData.settings.logourl) document.getElementById('siteLogo').src = appData.settings.logourl;
-                    
-                    // NOTICE BOARD LOGIC: Update content if exists
-                    if (appData.settings.noticeboard_content) {
-                        const noticeBoard = document.getElementById('noticeBoardContainer');
-                        if (noticeBoard) {
-                            noticeBoard.innerHTML = appData.settings.noticeboard_content;
-                        }
-                    }
-
-                    initBannerSlider();
-                    if(appData.popups && appData.popups.length > 0) showPopup(appData.popups[0]);
-                    renderCategories();
-                    renderAdTypeFilters(); 
-                    populateCategoryDropdown();
-                    applyFilters(); 
+                    initializeAppUI(true);
                 } else { 
-                    document.getElementById('skeletonLoader').classList.remove('active');
-                    document.getElementById('homeView').classList.add('active');
-                    document.getElementById('headerSkeleton').classList.add('hidden');
-                    document.getElementById('realHeaderContent').classList.remove('hidden');
-                    Swal.fire({ icon: 'error', title: 'ত্রুটি', text: 'ডাটা লোড করতে ব্যর্থ: ' + res.error }); 
+                    initializeAppUI(false, res.error); 
                 }
             }).withFailureHandler(err => { 
-                document.getElementById('skeletonLoader').classList.remove('active');
-                document.getElementById('homeView').classList.add('active');
-                document.getElementById('headerSkeleton').classList.add('hidden');
-                document.getElementById('realHeaderContent').classList.remove('hidden');
-                Swal.fire({ icon: 'error', title: 'সার্ভার এরর', text: err }); 
+                initializeAppUI(false, err); 
             }).getInitialData();
         }
+
+        // Common UI Initialization Function
+        function initializeAppUI(isSuccess, errorMsg = null) {
+            document.getElementById('skeletonLoader').classList.remove('active');
+            document.getElementById('homeView').classList.add('active');
+            document.getElementById('headerSkeleton').classList.add('hidden');
+            document.getElementById('realHeaderContent').classList.remove('hidden');
+
+            if (!isSuccess) {
+                Swal.fire({ icon: 'error', title: 'ত্রুটি', text: 'ডাটা লোড করতে ব্যর্থ: ' + errorMsg }); 
+                return;
+            }
+
+            // --- FIX: ডায়নামিক টাইটেল আপডেট ---
+            if (appData.settings.sitename) {
+                document.title = appData.settings.sitename;
+                document.getElementById('siteName').innerText = appData.settings.sitename;
+            }
+            // ----------------------------------
+
+            if (appData.settings.logourl) document.getElementById('siteLogo').src = appData.settings.logourl;
+            
+            // NOTICE BOARD LOGIC: Update content if exists
+            if (appData.settings.noticeboard_content) {
+                const noticeBoard = document.getElementById('noticeBoardContainer');
+                if (noticeBoard) {
+                    noticeBoard.innerHTML = appData.settings.noticeboard_content;
+                }
+            }
+
+            initBannerSlider();
+            if(appData.popups && appData.popups.length > 0) showPopup(appData.popups[0]);
+            renderCategories();
+            renderAdTypeFilters(); 
+            populateCategoryDropdown();
+            applyFilters(); 
+        }
+        // ============================================
+        // END CACHING LOGIC
+        // ============================================
 
         function performSearch() {
             const searchInput = document.getElementById('searchInput');

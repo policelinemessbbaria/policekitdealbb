@@ -1,15 +1,15 @@
 {
-  "short_name": "ফোনবুক",
-  "name": "ডিজিটাল পুলিশ ফোনবুক",
+  "short_name": "PoliceKitDealBB",
+  "name": "PoliceKitDealBB",
   "icons": [
     {
-      "src": "https://img.icons8.com/color/192/police-badge.png",
-      "type": "image/png",
+      "src": "https://res.cloudinary.com/dkowkawiq/image/upload/v1781187355/20260611_200701_joqeui.webp",
+      "type": "image/webp",
       "sizes": "192x192"
     },
     {
-      "src": "https://img.icons8.com/color/512/police-badge.png",
-      "type": "image/png",
+      "src": "https://res.cloudinary.com/dkowkawiq/image/upload/v1781187355/20260611_200701_joqeui.webp",
+      "type": "image/webp",
       "sizes": "512x512"
     }
   ],

@@ -597,6 +597,28 @@
                 const hash = window.location.hash.replace('#', '');
                 if (hash) switchView(hash, false); else switchView('homeView', false);
             });
+
+// রেজিস্ট্রেশন মোডাল অবজার্ভার (শুধুমাত্র মোডাল বন্ধ হলে রিসেট করবে)
+const otpModalEl = document.getElementById('otpModal');
+const otpModalObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+            if (otpModalEl.classList.contains('hidden')) {
+                // মোডাল বন্ধ হলে টাইমার বন্ধ ও রিসেট করা
+                stopOtpTimer();
+                const regTimer = document.getElementById('regOtpTimer');
+                regTimer.innerText = '০৫:০০';
+                regTimer.classList.remove('text-gray-400');
+                regTimer.classList.add('text-red-500');
+                regTimer.classList.add('hidden');
+                document.getElementById('btnResendRegOtp').classList.add('hidden');
+            }
+            // ⚠️ মোডাল ওপেনের সময় কিছুই করবে না — 
+            // টাইমার ও বাটন শুধুমাত্র startOtpTimer() ফাংশন দিয়ে নিয়ন্ত্রণ হবে
+        }
+    });
+});
+if(otpModalEl) otpModalObserver.observe(otpModalEl, { attributes: true });
         });
 
         function showLoader(show) { document.getElementById('globalLoader').style.display = show ? 'flex' : 'none'; }

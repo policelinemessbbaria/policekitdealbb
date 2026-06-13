@@ -284,9 +284,7 @@
                     <div class="mb-4"><label class="block text-sm font-semibold text-gray-700 mb-1">পাসওয়ার্ড</label><input type="password" id="loginPassword" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
                     <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2.5 rounded-lg">লগইন করুন</button>
                     
-                    <!-- ========================================== -->
-                    <!-- NEW FEATURE: Forgot Password Button Added -->
-                    <!-- ========================================== -->
+                    <!-- Forgot Password Button -->
                     <div class="text-right mt-3">
                         <button type="button" onclick="openForgotPasswordModal()" class="text-xs text-blue-600 hover:underline font-medium">পাসওয়ার্ড ভুলে গেছেন?</button>
                     </div>
@@ -366,7 +364,7 @@
         </div>
     </div>
 
-    <!-- OTP Modal -->
+    <!-- OTP Modal (Registration) -->
     <div id="otpModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl p-5 w-full max-w-xs shadow-xl text-center">
             <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl"><i class="fa-solid fa-shield-keyhole"></i></div>
@@ -374,10 +372,12 @@
             <p class="text-xs text-gray-500 mb-4">আপনার ইমেইলে একটি ৬-ডিজিটের OTP পাঠানো হয়েছে।</p>
             <input type="number" id="otpInput" class="w-full text-center tracking-widest text-xl font-bold border rounded-xl py-2 mb-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="000000">
             
-            <!-- ========================================== -->
-            <!-- NEW FEATURE: Registration OTP Timer Added -->
-            <!-- ========================================== -->
-            <p id="regOtpTimer" class="text-xs text-red-500 font-bold mb-4 hidden">০৫:০০</p>
+            <!-- Timer & Resend Container -->
+            <div class="h-6 mb-4">
+                <p id="regOtpTimer" class="text-xs text-red-500 font-bold hidden">০৫:০০</p>
+                <!-- রিসেন্ড বাটন ডিফল্টভাবে লুকানো থাকবে -->
+                <button id="btnResendRegOtp" onclick="resendRegOtp()" class="hidden text-xs text-blue-600 font-bold underline hover:text-blue-800">পুনরায় OTP পাঠান</button>
+            </div>
             
             <div class="flex space-x-2"><button onclick="closeOtpModal()" class="w-1/2 border py-2 rounded-lg font-medium text-gray-600 text-sm">বাতিল</button><button onclick="handleOtpVerify()" class="w-1/2 bg-blue-600 text-white py-2 rounded-lg font-bold text-sm">ভেরিফাই করুন</button></div>
         </div>
@@ -403,7 +403,14 @@
             <div id="forgotStep2" class="hidden">
                 <div class="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl"><i class="fa-solid fa-shield-halved"></i></div>
                 <h3 class="font-bold text-gray-800 text-lg mb-1">OTP ভেরিফিকেশন</h3>
-                <p id="forgotTimerText" class="text-xs text-red-500 font-bold mb-2">০৫:০০</p>
+                
+                <!-- Timer & Resend Container -->
+                <div class="h-6 mb-2">
+                    <p id="forgotTimerText" class="text-xs text-red-500 font-bold hidden">০৫:০০</p>
+                    <!-- রিসেন্ড বাটন ডিফল্টভাবে লুকানো থাকবে -->
+                    <button id="btnResendForgotOtp" onclick="handleSendForgotOtp()" class="hidden text-xs text-blue-600 font-bold underline hover:text-blue-800">পুনরায় OTP পাঠান</button>
+                </div>
+
                 <input type="number" id="forgotOtp" class="w-full text-center tracking-widest text-xl font-bold border rounded-xl py-2 mb-3 focus:ring-2 focus:ring-green-500 outline-none" placeholder="৬ ডিজিটের OTP">
                 <input type="password" id="forgotNewPass" class="w-full px-3 py-2 border rounded-xl mb-1 focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)">
                 <p class="text-[10px] text-gray-400 mb-3 text-left">পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।</p>
@@ -461,7 +468,6 @@
 
     <!-- Cropper.js JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-
     <script>
     function compressImage(file, maxWidth, maxHeight, callback) {
         const reader = new FileReader();
@@ -592,28 +598,30 @@
                 if (hash) switchView(hash, false); else switchView('homeView', false);
             });
 
-            // ==========================================
-            // NEW FEATURE: REGISTRATION OTP AUTO-TIMER (Existing Function Modify না করে)
-            // ==========================================
+            // রেজিস্ট্রেশন মোডাল অবজার্ভার (OTP টাইমার ম্যানেজ করার জন্য)
             const otpModalEl = document.getElementById('otpModal');
             const otpModalObserver = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
                     if (mutation.attributeName === 'class') {
                         if (!otpModalEl.classList.contains('hidden')) {
-                            startOtpTimer('regOtpTimer');
+                            // মোডাল ওপেন হলে টাইমার চালু হবে না, শুধুমাত্র OTP পাঠানোর পর চালু হবে
+                            // তবে ডিফল্টভাবে টাইমার এবং রিসেন্ড বাটন লুকানো থাকবে
+                            document.getElementById('regOtpTimer').classList.add('hidden');
+                            document.getElementById('btnResendRegOtp').classList.add('hidden');
                         } else {
+                            // মোডাল বন্ধ হলে টাইমার বন্ধ করা
                             stopOtpTimer();
                             const regTimer = document.getElementById('regOtpTimer');
                             regTimer.innerText = '০৫:০০';
                             regTimer.classList.remove('text-gray-400');
                             regTimer.classList.add('text-red-500');
                             regTimer.classList.add('hidden');
+                            document.getElementById('btnResendRegOtp').classList.add('hidden');
                         }
                     }
                 });
             });
             if(otpModalEl) otpModalObserver.observe(otpModalEl, { attributes: true });
-            // ==========================================
         });
 
         function showLoader(show) { document.getElementById('globalLoader').style.display = show ? 'flex' : 'none'; }
@@ -1516,8 +1524,55 @@ function generatePlaceholderImage(text) {
             showLoader(true);
             google.script.run.withSuccessHandler(res => { 
                 showLoader(false); 
-                if (res.success) document.getElementById('otpModal').classList.remove('hidden'); 
-                else Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.error || 'OTP পাঠানো সম্ভব হয়নি।' }); 
+                if (res.success) {
+                    // OTP সফলভাবে পাঠানো হলে টাইমার শুরু করা
+                    document.getElementById('otpModal').classList.remove('hidden');
+                    startOtpTimer('regOtpTimer', 'btnResendRegOtp', 'countdown', 300); // ৫ মিনিট কাউন্টডাউন
+                } else { 
+                    // যদি সার্ভার বলে অপেক্ষা করতে (Cooldown)
+                    if(res.remainingSeconds) {
+                        Swal.fire({ 
+                            icon: 'warning', 
+                            title: 'অপেক্ষা করুন', 
+                            text: `আপনি খুব দ্রুত আবার OTP চেষ্টা করেছেন।`, 
+                            confirmButtonColor: '#d33' 
+                        });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.error || 'OTP পাঠানো সম্ভব হয়নি।' }); 
+                    }
+                }
+            }).withFailureHandler(err => { 
+                showLoader(false); 
+                Swal.fire({ icon: 'error', title: 'এরর', text: err }); 
+            }).sendRegistrationOtp(tempRegData.email);
+        }
+
+        // রেজিস্ট্রেশনের জন্য রিসেন্ড ফাংশন
+        function resendRegOtp() {
+             // বাটন লুকানো এবং লোডার দেখানো
+            document.getElementById('btnResendRegOtp').classList.add('hidden');
+            // ফর্ম সাবমিট লজিক আবার কল করলেই হবে, কারণ সেখানে ইমেইল ইনপুট নেই। 
+            // তাই আমাদের সরাসরি OTP রিকোয়েস্ট পাঠাতে হবে
+            showLoader(true);
+            google.script.run.withSuccessHandler(res => { 
+                showLoader(false); 
+                if (res.success) {
+                    startOtpTimer('regOtpTimer', 'btnResendRegOtp', 'countdown', 300); 
+                    Swal.fire({ icon: 'success', title: 'OTP পাঠানো হয়েছে', text: 'আপনার ইমেইলে নতুন OTP পাঠানো হয়েছে।', timer: 1500, showConfirmButton: false });
+                } else {
+                     if(res.remainingSeconds) {
+                        // কুলডাউন মোডে টাইমার চালু
+                        startOtpTimer('regOtpTimer', 'btnResendRegOtp', 'cooldown', res.remainingSeconds);
+                        Swal.fire({ 
+                            icon: 'warning', 
+                            title: 'অপেক্ষা করুন', 
+                            text: `আপনি খুব দ্রুত চেষ্টা করেছেন। টাইমার দেখুন।`, 
+                            confirmButtonColor: '#d33' 
+                        });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.error });
+                    }
+                }
             }).withFailureHandler(err => { 
                 showLoader(false); 
                 Swal.fire({ icon: 'error', title: 'এরর', text: err }); 
@@ -1873,36 +1928,57 @@ function toggleMyRequests() {
             return num.toString().replace(/\d/g, d => banglaDigits[d]);
         }
 
-        function startOtpTimer(timerElementId) {
+        /**
+         * টাইমার চালু করার ফাংশন
+         * @param {string} timerId - টাইমার টেক্সট এলিমেন্টের ID (যেখানে সময় দেখাবে)
+         * @param {string} btnId - রিসেন্ড বাটনের ID (যেটি টাইমার শেষে দেখাবে)
+         * @param {string} mode - 'countdown' (স্বাভাবিক ৫ মিনিট) অথবা 'cooldown' (অপেক্ষা করার সময়)
+         * @param {number} initialSeconds - টাইমার শুরুর সেকেন্ড
+         */
+        function startOtpTimer(timerId, btnId, mode, initialSeconds) {
             stopOtpTimer(); // পুরাতন টাইমার থাকলে বন্ধ করে দেওয়া হবে
-            const timerEl = document.getElementById(timerElementId);
-            if(timerEl) timerEl.classList.remove('hidden');
             
-            let timeLeft = 5 * 60; // ৫ মিনিট = ৩০০ সেকেন্ড
-            updateTimerDisplay(timerElementId, timeLeft);
+            const timerEl = document.getElementById(timerId);
+            const btnEl = document.getElementById(btnId);
+            
+            if(timerEl) timerEl.classList.remove('hidden');
+            if(btnEl) btnEl.classList.add('hidden'); // টাইমার চললে বাটন লুকানো থাকবে
+
+            let timeLeft = initialSeconds;
+            updateTimerDisplay(timerId, timeLeft, mode);
             
             otpTimerInterval = setInterval(() => {
                 timeLeft--;
-                updateTimerDisplay(timerElementId, timeLeft);
+                updateTimerDisplay(timerId, timeLeft, mode);
                 
                 if (timeLeft <= 0) {
                     stopOtpTimer();
                     if(timerEl) {
-                        timerEl.innerText = "সময় শেষ!";
-                        timerEl.classList.remove('text-red-500', 'text-gray-400');
-                        timerEl.classList.add('text-gray-500');
+                        timerEl.classList.add('hidden'); // টাইমার শেষে টেক্সট লুকানো
+                    }
+                    if(btnEl) {
+                        btnEl.classList.remove('hidden'); // বাটন দেখানো
                     }
                 }
             }, 1000);
         }
 
-        function updateTimerDisplay(timerElementId, seconds) {
+        function updateTimerDisplay(timerElementId, seconds, mode) {
             const timerEl = document.getElementById(timerElementId);
             if(timerEl) {
                 const mins = Math.floor(seconds / 60);
                 const secs = seconds % 60;
                 const formattedTime = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-                timerEl.innerText = convertToBanglaNum(formattedTime);
+                
+                if (mode === 'cooldown') {
+                    timerEl.innerText = `অপেক্ষা করুন: ${convertToBanglaNum(formattedTime)}`;
+                    timerEl.classList.remove('text-red-500');
+                    timerEl.classList.add('text-gray-500'); // কুলডাউনে সাদা বা গ্রে কালার
+                } else {
+                    timerEl.innerText = convertToBanglaNum(formattedTime);
+                    timerEl.classList.remove('text-gray-500');
+                    timerEl.classList.add('text-red-500'); // স্বাভাবিক টাইমারে লাল কালার
+                }
             }
         }
 
@@ -1921,6 +1997,10 @@ function toggleMyRequests() {
             document.getElementById('forgotNewPass').value = '';
             document.getElementById('forgotPasswordModal').classList.remove('hidden');
             stopOtpTimer();
+            
+            // ডিফল্টভাবে টাইমার এবং বাটন লুকানো রাখা
+            document.getElementById('forgotTimerText').classList.add('hidden');
+            document.getElementById('btnResendForgotOtp').classList.add('hidden');
         }
 
         function closeForgotPasswordModal() {
@@ -1945,11 +2025,24 @@ function toggleMyRequests() {
                         tempForgotEmail = email;
                         document.getElementById('forgotStep1').classList.add('hidden');
                         document.getElementById('forgotStep2').classList.remove('hidden');
-                        startOtpTimer('forgotTimerText'); // ফরগট পাসওয়ার্ড টাইমার শুরু
+                        
+                        // সফল হলে ৫ মিনিট (৩০০ সেকেন্ড) কাউন্টডাউন
+                        startOtpTimer('forgotTimerText', 'btnResendForgotOtp', 'countdown', 300);
+                        
                         Swal.fire({ icon: 'success', title: 'OTP পাঠানো হয়েছে', text: res.message, timer: 2000, showConfirmButton: false });
                     } else {
+                        // যদি সার্ভার বলে অপেক্ষা করতে হবে (Cooldown)
                         if (res.remainingSeconds) {
-                            Swal.fire({ icon: 'warning', title: 'অপেক্ষা করুন', text: `আপনি খুব দ্রুত আবার OTP চেষ্টা করেছেন। ${res.remainingSeconds} সেকেন্ড পর আবার চেষ্টা করুন।`, confirmButtonColor: '#d33' });
+                            // স্টেপ ২ এ যাওয়া না হলেও, যদি ইউজার স্টেপ ২ এ থেকেই রিকোয়েস্ট দেয় তখন কুলডাউন দেখাতে হবে
+                            // তবে এখানে আমরা স্টেপ ১ এ আছি। 
+                            // তাই মেসেজ দেখালাম।
+                            Swal.fire({ icon: 'warning', title: 'অপেক্ষা করুন', text: `আপনি খুব দ্রুত আবার OTP চেষ্টা করেছেন।`, confirmButtonColor: '#d33' });
+                            
+                            // যদি স্টেপ ২ ওপেন থাকে এবং সেখান থেকে রিকোয়েস্ট আসে (রিসেন্ড বাটন ক্লিক করে)
+                            // তখন আমাদের টাইমার আপডেট করতে হবে।
+                            if(!document.getElementById('forgotStep2').classList.contains('hidden')){
+                                startOtpTimer('forgotTimerText', 'btnResendForgotOtp', 'cooldown', res.remainingSeconds);
+                            }
                         } else {
                             Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.error });
                         }

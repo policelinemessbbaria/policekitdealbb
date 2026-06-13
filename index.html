@@ -11,7 +11,7 @@
 <!-- ২. ক্যানোনিক্যাল ট্যাগ (গুগলকে মেইন ইউআরএল চেনানোর জন্য) -->
 <link rel="canonical" href="https://policelinemessbbaria.github.io/policekitdealb/">
 
-<!-- ৩. গুগল বটকে ক্রল করার অনুমতি দেওয়া -->
+<!-- ৩. গুগল বটকে ক্রল করার অনুমতি দেওয়া -->
 <meta name="robots" content="index, follow">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://policelinemessbbaria.github.io/policekitdealb/">
@@ -283,6 +283,13 @@
                     <div class="mb-4"><label class="block text-sm font-semibold text-gray-700 mb-1">ইমেইল বা মোবাইল নম্বর</label><input type="text" id="loginIdentifier" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
                     <div class="mb-4"><label class="block text-sm font-semibold text-gray-700 mb-1">পাসওয়ার্ড</label><input type="password" id="loginPassword" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
                     <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2.5 rounded-lg">লগইন করুন</button>
+                    
+                    <!-- ========================================== -->
+                    <!-- NEW FEATURE: Forgot Password Button Added -->
+                    <!-- ========================================== -->
+                    <div class="text-right mt-3">
+                        <button type="button" onclick="openForgotPasswordModal()" class="text-xs text-blue-600 hover:underline font-medium">পাসওয়ার্ড ভুলে গেছেন?</button>
+                    </div>
                 </form>
                 <form id="registerForm" onsubmit="handleRegisterSubmit(event)" class="hidden">
                     <div class="mb-3"><label class="block text-sm font-semibold text-gray-700 mb-1">পূর্ণ নাম *</label><input type="text" id="regName" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
@@ -365,8 +372,43 @@
             <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl"><i class="fa-solid fa-shield-keyhole"></i></div>
             <h3 class="font-bold text-gray-800 text-lg mb-1">ইমেইল ভেরিফিকেশন</h3>
             <p class="text-xs text-gray-500 mb-4">আপনার ইমেইলে একটি ৬-ডিজিটের OTP পাঠানো হয়েছে।</p>
-            <input type="number" id="otpInput" class="w-full text-center tracking-widest text-xl font-bold border rounded-xl py-2 mb-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="000000">
+            <input type="number" id="otpInput" class="w-full text-center tracking-widest text-xl font-bold border rounded-xl py-2 mb-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="000000">
+            
+            <!-- ========================================== -->
+            <!-- NEW FEATURE: Registration OTP Timer Added -->
+            <!-- ========================================== -->
+            <p id="regOtpTimer" class="text-xs text-red-500 font-bold mb-4 hidden">০৫:০০</p>
+            
             <div class="flex space-x-2"><button onclick="closeOtpModal()" class="w-1/2 border py-2 rounded-lg font-medium text-gray-600 text-sm">বাতিল</button><button onclick="handleOtpVerify()" class="w-1/2 bg-blue-600 text-white py-2 rounded-lg font-bold text-sm">ভেরিফাই করুন</button></div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- NEW FEATURE: Forgot Password Modal Added -->
+    <!-- ========================================== -->
+    <div id="forgotPasswordModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl p-5 w-full max-w-xs shadow-xl text-center relative">
+            <button onclick="closeForgotPasswordModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            
+            <!-- Step 1: Email Input -->
+            <div id="forgotStep1">
+                <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl"><i class="fa-solid fa-key"></i></div>
+                <h3 class="font-bold text-gray-800 text-lg mb-1">পাসওয়ার্ড রিসেট</h3>
+                <p class="text-xs text-gray-500 mb-4">রেজিস্টার্ড ইমেইল দিন। একটি OTP পাঠানো হবে।</p>
+                <input type="email" id="forgotEmail" class="w-full px-3 py-2 border rounded-xl mb-4 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="example@gmail.com">
+                <button onclick="handleSendForgotOtp()" class="w-full bg-indigo-600 text-white py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 transition">OTP পাঠান</button>
+            </div>
+
+            <!-- Step 2: OTP & New Password -->
+            <div id="forgotStep2" class="hidden">
+                <div class="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl"><i class="fa-solid fa-shield-halved"></i></div>
+                <h3 class="font-bold text-gray-800 text-lg mb-1">OTP ভেরিফিকেশন</h3>
+                <p id="forgotTimerText" class="text-xs text-red-500 font-bold mb-2">০৫:০০</p>
+                <input type="number" id="forgotOtp" class="w-full text-center tracking-widest text-xl font-bold border rounded-xl py-2 mb-3 focus:ring-2 focus:ring-green-500 outline-none" placeholder="৬ ডিজিটের OTP">
+                <input type="password" id="forgotNewPass" class="w-full px-3 py-2 border rounded-xl mb-1 focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)">
+                <p class="text-[10px] text-gray-400 mb-3 text-left">পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।</p>
+                <button onclick="handleVerifyForgotOtp()" class="w-full bg-green-600 text-white py-2.5 rounded-xl font-bold text-sm hover:bg-green-700 transition">পাসওয়ার্ড পরিবর্তন করুন</button>
+            </div>
         </div>
     </div>
 
@@ -442,7 +484,7 @@
     // ============================================================
     // VERCEL/NETLIFY HOSTING HELPER (POLYFILL FOR GOOGLE.SCRIPT.RUN)
     // ============================================================
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzbAYocRD3HJLiykJaFcnZt4zpLienf6Ov8M5qvrDbLeZ3oNNIkgy3gky8tssi2MXiI/exec"; 
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwirFsiwZGq3zRli4Afaet17xX_NQypxrg7AKFF0q-w-C-G0bsKHsdOCbXPLVny2zq_/exec"; 
 
     if (typeof google === 'undefined' || !google.script) {
         window.google = {
@@ -524,6 +566,13 @@
         let croppedImagesData = {}; 
         // =============================
 
+        // ==========================================
+        // NEW FEATURE: FORGOT PASSWORD STATE VARIABLES
+        // ==========================================
+        let tempForgotEmail = null;
+        let otpTimerInterval = null;
+        // ==========================================
+
         document.addEventListener('DOMContentLoaded', () => {
             loadInitialData();
             updateAuthUI();
@@ -542,6 +591,29 @@
                 const hash = window.location.hash.replace('#', '');
                 if (hash) switchView(hash, false); else switchView('homeView', false);
             });
+
+            // ==========================================
+            // NEW FEATURE: REGISTRATION OTP AUTO-TIMER (Existing Function Modify না করে)
+            // ==========================================
+            const otpModalEl = document.getElementById('otpModal');
+            const otpModalObserver = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.attributeName === 'class') {
+                        if (!otpModalEl.classList.contains('hidden')) {
+                            startOtpTimer('regOtpTimer');
+                        } else {
+                            stopOtpTimer();
+                            const regTimer = document.getElementById('regOtpTimer');
+                            regTimer.innerText = '০৫:০০';
+                            regTimer.classList.remove('text-gray-400');
+                            regTimer.classList.add('text-red-500');
+                            regTimer.classList.add('hidden');
+                        }
+                    }
+                });
+            });
+            if(otpModalEl) otpModalObserver.observe(otpModalEl, { attributes: true });
+            // ==========================================
         });
 
         function showLoader(show) { document.getElementById('globalLoader').style.display = show ? 'flex' : 'none'; }
@@ -1459,7 +1531,9 @@ function generatePlaceholderImage(text) {
             google.script.run.withSuccessHandler(res => { showLoader(false); if (res.success) Swal.fire({ icon: 'success', title: 'সফল!', text: 'রেজিস্ট্রেশন সফল হয়েছে! অনুগ্রণ করে লগইন করুন।', confirmButtonColor: '#2563eb' }).then(() => { closeOtpModal(); toggleAuthTab('login'); }); else Swal.fire({ icon: 'error', title: 'ভুল OTP', text: res.error }); }).withFailureHandler(err => { showLoader(false); Swal.fire({ icon: 'error', title: 'এরর', text: err }); }).verifyAndRegister(tempRegData.email, otp, tempRegData);
         }
 
-        function closeOtpModal() { document.getElementById('otpModal').classList.add('hidden'); }
+        function closeOtpModal() { 
+            document.getElementById('otpModal').classList.add('hidden'); 
+        }
 
         function handleLogin(event) {
             event.preventDefault();
@@ -1739,20 +1813,20 @@ function toggleMyRequests() {
         arrow.classList.add('fa-chevron-up');
         
         // লজিক: যদি ক্যাশে ডাটা থাকে তবে সেটি দেখাবে। 
-        // যদি ক্যাশ ফাঁকা থাকে (নতুন রিকোয়েস্ট সাবমিটের পর এমনটা হয়), তবে সার্ভার থেকে ফ্রেশ ডাটা আনবে।
-        
-        if (cachedUserRequests && cachedUserRequests.length > 0) {
-            renderUserRequestsList(cachedUserRequests);
-        } else {
-            loadUserRequests();
+                // যদি ক্যাশ ফাঁকা থাকে (নতুন রিকোয়েস্ট সাবমিটের পর এমনটা হয়), তবে সার্ভার থেকে ফ্রেশ ডাটা আনবে।
+                
+                if (cachedUserRequests && cachedUserRequests.length > 0) {
+                    renderUserRequestsList(cachedUserRequests);
+                } else {
+                    loadUserRequests();
+                }
+            } else {
+                // ড্রয়ারটি বর্তমানে ওপেন আছে, তাই এটি বন্ধ করা হচ্ছে
+                listContainer.classList.add('hidden');
+                arrow.classList.remove('fa-chevron-up');
+                arrow.classList.add('fa-chevron-down');
+            }
         }
-    } else {
-        // ড্রয়ারটি বর্তমানে ওপেন আছে, তাই এটি বন্ধ করা হচ্ছে
-        listContainer.classList.add('hidden');
-        arrow.classList.remove('fa-chevron-up');
-        arrow.classList.add('fa-chevron-down');
-    }
-}
 
         function confirmDeleteRequest(requestId, productName) {
             Swal.fire({
@@ -1788,6 +1862,133 @@ function toggleMyRequests() {
                 Swal.fire({ icon: 'error', title: 'এরর', text: err });
             }).deleteUserRequest(requestId, currentUser.email, currentUser.fullname, sessionToken);
         }
+
+
+        // ==========================================
+        // NEW FEATURE: FORGOT PASSWORD & TIMER LOGIC
+        // ==========================================
+        
+        function convertToBanglaNum(num) {
+            const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+            return num.toString().replace(/\d/g, d => banglaDigits[d]);
+        }
+
+        function startOtpTimer(timerElementId) {
+            stopOtpTimer(); // পুরাতন টাইমার থাকলে বন্ধ করে দেওয়া হবে
+            const timerEl = document.getElementById(timerElementId);
+            if(timerEl) timerEl.classList.remove('hidden');
+            
+            let timeLeft = 5 * 60; // ৫ মিনিট = ৩০০ সেকেন্ড
+            updateTimerDisplay(timerElementId, timeLeft);
+            
+            otpTimerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay(timerElementId, timeLeft);
+                
+                if (timeLeft <= 0) {
+                    stopOtpTimer();
+                    if(timerEl) {
+                        timerEl.innerText = "সময় শেষ!";
+                        timerEl.classList.remove('text-red-500', 'text-gray-400');
+                        timerEl.classList.add('text-gray-500');
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay(timerElementId, seconds) {
+            const timerEl = document.getElementById(timerElementId);
+            if(timerEl) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                const formattedTime = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                timerEl.innerText = convertToBanglaNum(formattedTime);
+            }
+        }
+
+        function stopOtpTimer() {
+            if (otpTimerInterval) {
+                clearInterval(otpTimerInterval);
+                otpTimerInterval = null;
+            }
+        }
+
+        function openForgotPasswordModal() {
+            document.getElementById('forgotStep1').classList.remove('hidden');
+            document.getElementById('forgotStep2').classList.add('hidden');
+            document.getElementById('forgotEmail').value = '';
+            document.getElementById('forgotOtp').value = '';
+            document.getElementById('forgotNewPass').value = '';
+            document.getElementById('forgotPasswordModal').classList.remove('hidden');
+            stopOtpTimer();
+        }
+
+        function closeForgotPasswordModal() {
+            document.getElementById('forgotPasswordModal').classList.add('hidden');
+            stopOtpTimer();
+        }
+
+        function handleSendForgotOtp() {
+            const email = document.getElementById('forgotEmail').value.trim();
+            const emailRegex = /.+@gmail\.com$/;
+            
+            if (!emailRegex.test(email)) {
+                Swal.fire({ icon: 'error', title: 'ভুল ইমেইল!', text: 'ইমেইলটি অবশ্যই @gmail.com দিয়ে শেষ হতে হবে।', confirmButtonColor: '#d33' });
+                return;
+            }
+
+            showLoader(true);
+            google.script.run
+                .withSuccessHandler(res => {
+                    showLoader(false);
+                    if (res.success) {
+                        tempForgotEmail = email;
+                        document.getElementById('forgotStep1').classList.add('hidden');
+                        document.getElementById('forgotStep2').classList.remove('hidden');
+                        startOtpTimer('forgotTimerText'); // ফরগট পাসওয়ার্ড টাইমার শুরু
+                        Swal.fire({ icon: 'success', title: 'OTP পাঠানো হয়েছে', text: res.message, timer: 2000, showConfirmButton: false });
+                    } else {
+                        if (res.remainingSeconds) {
+                            Swal.fire({ icon: 'warning', title: 'অপেক্ষা করুন', text: `আপনি খুব দ্রুত আবার OTP চেষ্টা করেছেন। ${res.remainingSeconds} সেকেন্ড পর আবার চেষ্টা করুন।`, confirmButtonColor: '#d33' });
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.error });
+                        }
+                    }
+                })
+                .withFailureHandler(err => {
+                    showLoader(false);
+                    Swal.fire({ icon: 'error', title: 'এরর', text: err });
+                })
+                .sendForgotPasswordOtp(email);
+        }
+
+        function handleVerifyForgotOtp() {
+            const otp = document.getElementById('forgotOtp').value;
+            const newPass = document.getElementById('forgotNewPass').value;
+            
+            if(!otp) return Swal.fire({ icon: 'warning', title: 'প্রয়োজন', text: 'OTP দিন।' });
+            if(newPass.length < 6) return Swal.fire({ icon: 'error', title: 'পাসওয়ার্ড ছোট!', text: 'পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে।', confirmButtonColor: '#d33' });
+
+            showLoader(true);
+            google.script.run
+                .withSuccessHandler(res => {
+                    showLoader(false);
+                    if (res.success) {
+                        stopOtpTimer();
+                        closeForgotPasswordModal();
+                        toggleAuthTab('login'); // সফল হলে লগইন ট্যাবে ফিরিয়ে নিয়ে যাওয়া হবে
+                        Swal.fire({ icon: 'success', title: 'সফল!', text: res.message, confirmButtonColor: '#2563eb' });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.error });
+                    }
+                })
+                .withFailureHandler(err => {
+                    showLoader(false);
+                    Swal.fire({ icon: 'error', title: 'এরর', text: err });
+                })
+                .verifyOtpAndResetPassword(tempForgotEmail, otp, newPass);
+        }
+
     </script>
 </body>
 </html>

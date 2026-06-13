@@ -597,31 +597,6 @@
                 const hash = window.location.hash.replace('#', '');
                 if (hash) switchView(hash, false); else switchView('homeView', false);
             });
-
-            // রেজিস্ট্রেশন মোডাল অবজার্ভার (OTP টাইমার ম্যানেজ করার জন্য)
-            const otpModalEl = document.getElementById('otpModal');
-            const otpModalObserver = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                    if (mutation.attributeName === 'class') {
-                        if (!otpModalEl.classList.contains('hidden')) {
-                            // মোডাল ওপেন হলে টাইমার চালু হবে না, শুধুমাত্র OTP পাঠানোর পর চালু হবে
-                            // তবে ডিফল্টভাবে টাইমার এবং রিসেন্ড বাটন লুকানো থাকবে
-                            document.getElementById('regOtpTimer').classList.add('hidden');
-                            document.getElementById('btnResendRegOtp').classList.add('hidden');
-                        } else {
-                            // মোডাল বন্ধ হলে টাইমার বন্ধ করা
-                            stopOtpTimer();
-                            const regTimer = document.getElementById('regOtpTimer');
-                            regTimer.innerText = '০৫:০০';
-                            regTimer.classList.remove('text-gray-400');
-                            regTimer.classList.add('text-red-500');
-                            regTimer.classList.add('hidden');
-                            document.getElementById('btnResendRegOtp').classList.add('hidden');
-                        }
-                    }
-                });
-            });
-            if(otpModalEl) otpModalObserver.observe(otpModalEl, { attributes: true });
         });
 
         function showLoader(show) { document.getElementById('globalLoader').style.display = show ? 'flex' : 'none'; }

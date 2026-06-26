@@ -333,7 +333,7 @@
 
     <div class="bg-white border-t border-gray-200 py-3 text-center mt-6">
         <button onclick="openPoliciesModal()" class="text-xs text-gray-500 hover:text-blue-600 underline">নীতিমালা ও শর্তাবলী</button>
-        <p class="text-[10px] text-gray-400 mt-1">© 2025 Community Classifieds</p>
+        <p class="text-[10px] text-gray-400 mt-1">© 2024 Community Classifieds</p>
     </div>
 
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-lg px-6 py-2 flex justify-around items-center z-40 max-w-md mx-auto">
@@ -490,7 +490,7 @@
     // ============================================================
     // VERCEL/NETLIFY HOSTING HELPER (POLYFILL FOR GOOGLE.SCRIPT.RUN)
     // ============================================================
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwirFsiwZGq3zRli4Afaet17xX_NQypxrg7AKFF0q-w-C-G0bsKHsdOCbXPLVny2zq_/exec"; 
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwCLpi-CdRKEevHVguiTW7T7uci3np-lhCSjMdalUJTcZueABvj9Omkf6o52dcySZPZ/exec"; 
 
     if (typeof google === 'undefined' || !google.script) {
         window.google = {
@@ -558,9 +558,9 @@
         let activeCategory = 'all';
         let activeType = 'all'; 
 
-        // CACHING VARIABLES
-        let cachedUserAds = [];
-        let cachedUserRequests = []; 
+        // CACHING VARIABLES (FIX APPLIED HERE)
+        let cachedUserAds = null;
+        let cachedUserRequests = null; 
 
         let currentSlide = 0; let slideInterval; let touchStartX = 0; let touchEndX = 0;
 
@@ -649,25 +649,39 @@ if(otpModalEl) otpModalObserver.observe(otpModalEl, { attributes: true });
             }
         }
 
-        function checkAuthAndNavigate(viewId) {
-            if (!currentUser) {
-                Swal.fire({ icon: 'warning', title: 'লগইন প্রয়োজন', text: 'এই পেজে যেতে প্রথমে লগইন বা রেজিস্ট্রেশন সম্পন্ন করুন।', confirmButtonColor: '#2563eb' });
-                showView('accountView');
-            } else {
-                if(viewId === 'postAdView') {
-                    document.getElementById('adForm').reset();
-                    document.getElementById('editProductId').value = '';
-                    ['imgPre1','imgPre2','imgPre3'].forEach(id => { document.getElementById(id).classList.add('hidden'); document.getElementById(id).src = ''; });
-                    ['imgPlaceholder1','imgPlaceholder2','imgPlaceholder3'].forEach(id => document.getElementById(id).style.display = 'block');
-                    
-                    // Reset Cropper Data
-                    croppedImagesData = {}; 
-                    
-                    document.getElementById('adTypeModal').classList.remove('hidden');
-                } else { showView(viewId); }
+function checkAuthAndNavigate(viewId) {
+    if (!currentUser) {
+        Swal.fire({ icon: 'warning', title: 'লগইন প্রয়োজন', text: 'এই পেজে যেতে প্রথমে লগইন বা রেজিস্ট্রেশন সম্পন্ন করুন।', confirmButtonColor: '#2563eb' });
+        showView('accountView');
+    } else {
+        if(viewId === 'postAdView') {
+            document.getElementById('adForm').reset();
+            document.getElementById('editProductId').value = '';
+            ['imgPre1','imgPre2','imgPre3'].forEach(id => { document.getElementById(id).classList.add('hidden'); document.getElementById(id).src = ''; });
+            ['imgPlaceholder1','imgPlaceholder2','imgPlaceholder3'].forEach(id => document.getElementById(id).style.display = 'block');
+            
+            // Reset Cropper Data
+            croppedImagesData = {}; 
+            
+            // ==========================================
+            // ✨ NEW FEATURE: SILENT PRE-FETCH LOGIC
+            // যদি ক্যাশে ডাটা না থাকে, তাহলে ব্যাকগ্রাউন্ডে চুপচাপ ডাটা আনবে
+            // ==========================================
+            if (cachedUserAds === null) {
+                google.script.run
+                    .withSuccessHandler(res => {
+                        if (res.success) {
+                            cachedUserAds = res.ads; // ডাটা ক্যাশে সেভ হয়ে যাবে
+                        }
+                    })
+                    .getUserAds(currentUser.userid, sessionToken, currentUser.email);
             }
-        }
+            // ==========================================
 
+            document.getElementById('adTypeModal').classList.remove('hidden');
+        } else { showView(viewId); }
+    }
+}
         function selectAdType(type) {
             selectedAdType = type;
             closeAdTypeModal();
@@ -1162,7 +1176,7 @@ if(otpModalEl) otpModalObserver.observe(otpModalEl, { attributes: true });
                     google.script.run.withSuccessHandler(res => { 
                         showLoader(false); 
                         if (res.success) {
-                            cachedUserRequests = [];
+                            cachedUserRequests = null; // FIX APPLIED HERE
                             Swal.fire({ icon: 'success', title: 'সফল!', text: res.message, timer: 2000, showConfirmButton: false }); 
                         } else { 
                             Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.message || res.error || 'সমস্যা হয়েছে' }); 
@@ -1171,8 +1185,7 @@ if(otpModalEl) otpModalObserver.observe(otpModalEl, { attributes: true });
                 }
             });
         }
-
-        function showPopup(popupData) { document.getElementById('popupMessage').innerText = popupData.message; const imgEl = document.getElementById('popupImg'); const imgContainer = document.getElementById('popupImageContainer'); if(popupData.image) { imgEl.src = popupData.image; imgEl.classList.remove('hidden'); imgContainer.classList.remove('hidden'); } else { imgContainer.classList.add('hidden'); } document.getElementById('popupModal').classList.remove('hidden'); }
+                function showPopup(popupData) { document.getElementById('popupMessage').innerText = popupData.message; const imgEl = document.getElementById('popupImg'); const imgContainer = document.getElementById('popupImageContainer'); if(popupData.image) { imgEl.src = popupData.image; imgEl.classList.remove('hidden'); imgContainer.classList.remove('hidden'); } else { imgContainer.classList.add('hidden'); } document.getElementById('popupModal').classList.remove('hidden'); }
         function closePopupModal() { document.getElementById('popupModal').classList.add('hidden'); }
         function openPoliciesModal() {
             const container = document.getElementById('policiesContent'); container.innerHTML = '';
@@ -1341,7 +1354,26 @@ function generatePlaceholderImage(text) {
     // ইমেজ ডাটা রিটার্ন করা
     return canvas.toDataURL('image/jpeg', 0.8);
 }
-        function handleAdSubmit(event) {
+        // ==========================================
+        // PROMISE HELPERS FOR SEQUENTIAL UPLOAD
+        // ==========================================
+        function compressImagePromise(file, maxWidth, maxHeight) {
+            return new Promise((resolve) => {
+                compressImage(file, maxWidth, maxHeight, resolve);
+            });
+        }
+
+        function runGAS(functionName, ...args) {
+            return new Promise((resolve, reject) => {
+                google.script.run
+                    .withSuccessHandler(resolve)
+                    .withFailureHandler(reject)
+                    [functionName](...args);
+            });
+        }
+        // ==========================================
+
+        async function handleAdSubmit(event) {
             event.preventDefault();
             
             if (!currentUser) {
@@ -1350,104 +1382,118 @@ function generatePlaceholderImage(text) {
                 return;
             }
 
-            const currentAdsOfType = cachedUserAds.filter(ad => (ad.adType || 'sell') === selectedAdType).length;
+            const currentAdsOfType = cachedUserAds ? cachedUserAds.filter(ad => (ad.adType || 'sell') === selectedAdType).length : 0;
             if (currentAdsOfType >= 5) {
                 let typeText = selectedAdType === 'sell' ? 'বিক্রয়ি' : (selectedAdType === 'buy' ? 'কেনার' : 'এক্সচেঞ্জ');
-                Swal.fire({ icon: 'error', title: 'লিমিট শেষ!', text: `আপনি সর্বোচ্চ ৫টি ${typeText} বিজ্ঞাপন দিতে পারবেন। দয়া করে পুরাতন বিজ্ঞাপন মুছে ফেলুন।` });
+                Swal.fire({ icon: 'error', title: 'লিমিট শেষ!', text: `আপনি সর্বোচ্চ ৫টি ${typeText} বিজ্ঞাপন দিতে পারবেন।` });
                 return;
             }
 
             showLoader(true);
             const editId = document.getElementById('editProductId').value;
             let finalPrice = 0; let finalDiscount = 0; let finalDescription = document.getElementById('adDescription').value;
+            
             if (selectedAdType === 'sell') { finalPrice = document.getElementById('adPrice').value; finalDiscount = document.getElementById('adDiscountPrice').value || 0; } 
             else if (selectedAdType === 'buy') { finalPrice = document.getElementById('adMaxBudget').value; finalDiscount = 0; } 
             else if (selectedAdType === 'exchange') { finalPrice = 0; finalDiscount = 0; const sizeInfo = document.getElementById('adSizeSwap').value; finalDescription = `সাইজ বিনিময়: ${sizeInfo}\n\n${finalDescription}`; }
             
-            const imagesToUpload = [];
-            const files = [ { el: document.getElementById('imgInput1'), name: 'main.jpg' }, { el: document.getElementById('imgInput2'), name: 'img2.jpg' }, { el: document.getElementById('imgInput3'), name: 'img3.jpg' } ];
+            const files = [ 
+                { el: document.getElementById('imgInput1'), name: 'main.jpg' }, 
+                { el: document.getElementById('imgInput2'), name: 'img2.jpg' }, 
+                { el: document.getElementById('imgInput3'), name: 'img3.jpg' } 
+            ];
             
-            // --- অটো প্লেসহোল্ডার জেনারেট লজিক ---
-            let hasImage = false;
-            // Check cropped data or file input
+            // চেক করবো ইউজার কোনো নতুন ছবি সিলেক্ট করেছে কিনা
+            let hasNewImage = false;
             files.forEach(f => {
-                if(croppedImagesData[f.el.id] || (f.el.files && f.el.files[0])) hasImage = true;
+                if(croppedImagesData[f.el.id] || (f.el.files && f.el.files[0])) hasNewImage = true;
             });
 
-            // যদি কোনো ইমেজ না থাকে, তবে প্রোডাক্টের নাম দিয়ে ইমেজ তৈরি করা
-            if (!hasImage) {
-                const productName = document.getElementById('adName').value || "Product";
-                const placeholderData = generatePlaceholderImage(productName);
-                imagesToUpload[0] = { data: placeholderData, name: 'placeholder.jpg' };
-                imagesToUpload[1] = null;
-                imagesToUpload[2] = null;
-                
-                const adPayload = { id: editId || null, userId: currentUser.userid, userEmail: currentUser.email, name: document.getElementById('adName').value, category: document.getElementById('adCategory').value, price: finalPrice, discountprice: finalDiscount, description: finalDescription, images: imagesToUpload, adType: selectedAdType };
-                const action = editId ? 'updateAd' : 'submitAd';
-                google.script.run.withSuccessHandler(res => {
-                    showLoader(false);
-                    if (res.success) {
-                        cachedUserAds = []; 
-                        Swal.fire({ icon: 'success', title: 'সফল!', text: res.message, timer: 2000, showConfirmButton: false });
-                        document.getElementById('adForm').reset();
-                        ['imgPre1','imgPre2','imgPre3'].forEach(id => document.getElementById(id).classList.add('hidden'));
-                        ['imgPlaceholder1','imgPlaceholder2','imgPlaceholder3'].forEach(id => document.getElementById(id).style.display = 'block');
-                        croppedImagesData = {}; // Reset crop data
-                        selectedAdType = 'sell'; showView('homeView');
-                    } else { Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.error }); }
-                }).withFailureHandler(err => { showLoader(false); Swal.fire({ icon: 'error', title: 'সার্ভার এরর', text: err }); })[action](adPayload, sessionToken);
-                return; // ফাংশন এখানেই শেষ
-            }
-            // -------------------------------------------------
+            let finalImageUrls = [null, null, null];
 
-            // যদি ইউজার ইমেজ আপলোড করে থাকে, তবে স্বাভাবিক প্রসেস
-            let loadedCount = 0;
-            const checkAndSend = () => {
-                loadedCount++;
-                if(loadedCount === files.length) {
-                    const adPayload = { id: editId || null, userId: currentUser.userid, userEmail: currentUser.email, name: document.getElementById('adName').value, category: document.getElementById('adCategory').value, price: finalPrice, discountprice: finalDiscount, description: finalDescription, images: imagesToUpload, adType: selectedAdType };
-                    const action = editId ? 'updateAd' : 'submitAd';
-                    google.script.run.withSuccessHandler(res => {
-                        showLoader(false);
-                        if (res.success) {
-                            cachedUserAds = []; 
-                            Swal.fire({ icon: 'success', title: 'সফল!', text: res.message, timer: 2000, showConfirmButton: false });
-                            document.getElementById('adForm').reset();
-                            ['imgPre1','imgPre2','imgPre3'].forEach(id => { document.getElementById(id).classList.add('hidden'); document.getElementById(id).src = ''; });
-                            ['imgPlaceholder1','imgPlaceholder2','imgPlaceholder3'].forEach(id => document.getElementById(id).style.display = 'block');
-                            croppedImagesData = {}; // Reset crop data
-                            selectedAdType = 'sell'; showView('homeView');
-                        } else { Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.error }); }
-                    }).withFailureHandler(err => { showLoader(false); Swal.fire({ icon: 'error', title: 'সার্ভার এরর', text: err }); })[action](adPayload, sessionToken);
-                }
-            };
-            files.forEach((f, idx) => {
-                
-                // === NEW LOGIC: Check for cropped data first ===
-                if (croppedImagesData[f.el.id]) {
-                    imagesToUpload[idx] = { data: croppedImagesData[f.el.id], name: f.name + '_cropped.jpg' };
-                    checkAndSend();
-                    return; // Skip file processing
-                }
-                // ===============================================
+            try {
+                // কেস ১: যদি কোনো ছবি না থাকে (অটো প্লেসহোল্ডার জেনারেট)
+                if (!hasNewImage) {
+                    const productName = document.getElementById('adName').value || "Product";
+                    const placeholderData = generatePlaceholderImage(productName);
+                    
+                    // প্লেসহোল্ডার ইমেজটি সিকোয়েনশিয়ালি আপলোড করে URL নেওয়া হচ্ছে
+                    const url = await runGAS('uploadImageToDrive', placeholderData, 'placeholder.jpg');
+                    finalImageUrls[0] = url;
+                } 
+                // কেস ২: যদি ইউজার ছবি দিয়ে থাকে (একটি একটি করে আপলোড হবে)
+                else {
+                    for (let i = 0; i < files.length; i++) {
+                        const f = files[i];
+                        let base64Data = null;
 
-                // Existing logic: Handle normal file upload
-                if(f.el.files && f.el.files[0]) { 
-                    compressImage(f.el.files[0], 800, 800, (base64String) => { 
-                        imagesToUpload[idx] = { data: base64String, name: f.name }; 
-                        checkAndSend(); 
-                    }); 
-                } else {
-                    if(editId) { 
-                        const existingImg = document.getElementById('imgPre' + (idx+1)).src; 
-                        imagesToUpload[idx] = existingImg ? { data: existingImg, name: f.name } : null; 
-                    } else { 
-                        imagesToUpload[idx] = null; 
+                        // ক্রপ করা ছবি থাকলে
+                        if (croppedImagesData[f.el.id]) {
+                            base64Data = croppedImagesData[f.el.id];
+                        } 
+                        // নতুন ফাইল সিলেক্ট করা থাকলে কম্প্রেস করা হবে
+                        else if (f.el.files && f.el.files[0]) {
+                            base64Data = await compressImagePromise(f.el.files[0], 800, 800);
+                        } 
+                        // এডিট মোডে পুরাতন ছবি থাকলে সেটি রাখা হবে
+                        else if (editId) {
+                            const existingImg = document.getElementById('imgPre' + (i + 1)).src;
+                            if (existingImg && !existingImg.includes('data:')) { 
+                                finalImageUrls[i] = existingImg;
+                                continue; // আপলোড করার দরকার নেই, পরবর্তী ছবিতে যাও
+                            }
+                        } else {
+                            continue; // কোনো ছবি নেই, পরবর্তীতে যাও
+                        }
+
+                        // বেস ৬৪ ডাটা থাকলে ড্রাইভে আপলোড করো এবং URL সেভ করো
+                        if (base64Data) {
+                            const uploadedUrl = await runGAS('uploadImageToDrive', base64Data, f.name);
+                            finalImageUrls[i] = uploadedUrl;
+                        }
                     }
-                    checkAndSend();
                 }
-            });
+
+                // ---------------------------------------------------------
+                // সব ছবি আপলোড হয়ে গেছে! এখন শুধু টেক্সট ডাটা পাঠাবে
+                // ---------------------------------------------------------
+                const adPayload = { 
+                    id: editId || null, 
+                    userId: currentUser.userid, 
+                    userEmail: currentUser.email, 
+                    name: document.getElementById('adName').value, 
+                    category: document.getElementById('adCategory').value, 
+                    price: finalPrice, 
+                    discountprice: finalDiscount, 
+                    description: finalDescription, 
+                    imageUrls: finalImageUrls, 
+                    adType: selectedAdType 
+                };
+                
+                const action = editId ? 'updateAd' : 'submitAd';
+                const res = await runGAS(action, adPayload, sessionToken);
+
+                showLoader(false);
+                if (res.success) {
+                    cachedUserAds = null; 
+                    Swal.fire({ icon: 'success', title: 'সফল!', text: res.message, timer: 2000, showConfirmButton: false });
+                    document.getElementById('adForm').reset();
+                    ['imgPre1','imgPre2','imgPre3'].forEach(id => { document.getElementById(id).classList.add('hidden'); document.getElementById(id).src = ''; });
+                    ['imgPlaceholder1','imgPlaceholder2','imgPlaceholder3'].forEach(id => document.getElementById(id).style.display = 'block');
+                    croppedImagesData = {}; 
+                    selectedAdType = 'sell'; 
+                    showView('homeView');
+                } else { 
+                    Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.error }); 
+                }
+
+            } catch (error) {
+                showLoader(false);
+                console.error("Upload Error:", error);
+                Swal.fire({ icon: 'error', title: 'আপলোড ব্যর্থ', text: 'ছবি আপলোড করতে সমস্যা হয়েছে বা নেটওয়ার্ক স্লো। আবার চেষ্টা করুন।' });
+            }
         }
+
 
         function toggleAuthTab(type) {
             if (type === 'login') {
@@ -1501,8 +1547,8 @@ function generatePlaceholderImage(text) {
             if(password.length < 6) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'পাসওয়ার্ড ছোট!',
-                    text: 'পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে।',
+                    title: 'পাসওয়ার্ড ছোট!',
+                    text: 'পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে।',
                     confirmButtonColor: '#d33'
                 });
                 return;
@@ -1611,8 +1657,8 @@ function generatePlaceholderImage(text) {
                     localStorage.removeItem('sessionToken');
                     currentUser = null;
                     sessionToken = null;
-                    cachedUserAds = [];
-                    cachedUserRequests = []; // Clear Requests Cache
+                    cachedUserAds = null; // FIX APPLIED HERE
+                    cachedUserRequests = null; // FIX APPLIED HERE
                     updateAuthUI();
                     showView('homeView');
                     Swal.fire({ title: 'লগআউট!', text: 'আপনি সফলভাবে লগআউট হয়েছেন।', icon: 'success', timer: 1500, showConfirmButton: false });
@@ -1669,7 +1715,8 @@ function generatePlaceholderImage(text) {
         }
 
         function loadUserAds() {
-            if (cachedUserAds && cachedUserAds.length > 0) {
+            // Check cache (FIX APPLIED HERE)
+            if (cachedUserAds !== null) {
                 renderUserAdsList(cachedUserAds);
                 return;
             }
@@ -1696,7 +1743,8 @@ function generatePlaceholderImage(text) {
                 // লজিক: যদি ক্যাশে ডাটা থাকে তবে সেটি দেখাবে। 
                 // যদি ক্যাশ ফাঁকা থাকে (নতুন অ্যাড সাবমিটের পর এমনটা হয়), তবে সার্ভার থেকে ফ্রেশ ডাটা আনবে।
                 
-                if (cachedUserAds && cachedUserAds.length > 0) {
+                // Check cache (FIX APPLIED HERE)
+                if (cachedUserAds !== null) {
                     renderUserAdsList(cachedUserAds);
                 } else {
                     loadUserAds();
@@ -1731,7 +1779,7 @@ function generatePlaceholderImage(text) {
             google.script.run.withSuccessHandler(res => {
                 showLoader(false);
                 if(res.success) {
-                    cachedUserAds = []; 
+                    cachedUserAds = null; // FIX APPLIED HERE
                     loadUserAds(); 
                     Swal.fire({ icon: 'success', title: 'মুছে ফেলা হয়েছে!', text: res.message, timer: 2000, showConfirmButton: false });
                 } else {
@@ -1836,8 +1884,8 @@ function generatePlaceholderImage(text) {
         }
 
         function loadUserRequests() {
-            // Check cache
-            if (cachedUserRequests && cachedUserRequests.length > 0) {
+            // Check cache (FIX APPLIED HERE)
+            if (cachedUserRequests !== null) {
                 renderUserRequestsList(cachedUserRequests);
                 return;
             }
@@ -1865,20 +1913,21 @@ function toggleMyRequests() {
         arrow.classList.add('fa-chevron-up');
         
         // লজিক: যদি ক্যাশে ডাটা থাকে তবে সেটি দেখাবে। 
-                // যদি ক্যাশ ফাঁকা থাকে (নতুন রিকোয়েস্ট সাবমিটের পর এমনটা হয়), তবে সার্ভার থেকে ফ্রেশ ডাটা আনবে।
+        // যদি ক্যাশ ফাঁকা থাকে (নতুন রিকোয়েস্ট সাবমিটের পর এমনটা হয়), তবে সার্ভার থেকে ফ্রেশ ডাটা আনবে।
                 
-                if (cachedUserRequests && cachedUserRequests.length > 0) {
-                    renderUserRequestsList(cachedUserRequests);
-                } else {
-                    loadUserRequests();
-                }
-            } else {
-                // ড্রয়ারটি বর্তমানে ওপেন আছে, তাই এটি বন্ধ করা হচ্ছে
-                listContainer.classList.add('hidden');
-                arrow.classList.remove('fa-chevron-up');
-                arrow.classList.add('fa-chevron-down');
-            }
+        // Check cache (FIX APPLIED HERE)
+        if (cachedUserRequests !== null) {
+            renderUserRequestsList(cachedUserRequests);
+        } else {
+            loadUserRequests();
         }
+    } else {
+        // ড্রয়ারটি বর্তমানে ওপেন আছে, তাই এটি বন্ধ করা হচ্ছে
+        listContainer.classList.add('hidden');
+        arrow.classList.remove('fa-chevron-up');
+        arrow.classList.add('fa-chevron-down');
+    }
+}
 
         function confirmDeleteRequest(requestId, productName) {
             Swal.fire({
@@ -1903,7 +1952,7 @@ function toggleMyRequests() {
                 showLoader(false);
                 if(res.success) {
                     // Clear cache and reload
-                    cachedUserRequests = []; 
+                    cachedUserRequests = null; // FIX APPLIED HERE
                     loadUserRequests(); 
                     Swal.fire({ icon: 'success', title: 'মুছে ফেলা হয়েছে!', text: res.message, timer: 2000, showConfirmButton: false });
                 } else {

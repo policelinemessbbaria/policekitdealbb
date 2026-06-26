@@ -558,9 +558,9 @@
         let activeCategory = 'all';
         let activeType = 'all'; 
 
-        // CACHING VARIABLES
-        let cachedUserAds = [];
-        let cachedUserRequests = []; 
+        // CACHING VARIABLES (FIX APPLIED HERE)
+        let cachedUserAds = null;
+        let cachedUserRequests = null; 
 
         let currentSlide = 0; let slideInterval; let touchStartX = 0; let touchEndX = 0;
 
@@ -1162,7 +1162,7 @@ if(otpModalEl) otpModalObserver.observe(otpModalEl, { attributes: true });
                     google.script.run.withSuccessHandler(res => { 
                         showLoader(false); 
                         if (res.success) {
-                            cachedUserRequests = [];
+                            cachedUserRequests = null; // FIX APPLIED HERE
                             Swal.fire({ icon: 'success', title: 'সফল!', text: res.message, timer: 2000, showConfirmButton: false }); 
                         } else { 
                             Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.message || res.error || 'সমস্যা হয়েছে' }); 
@@ -1172,7 +1172,8 @@ if(otpModalEl) otpModalObserver.observe(otpModalEl, { attributes: true });
             });
         }
 
-        function showPopup(popupData) { document.getElementById('popupMessage').innerText = popupData.message; const imgEl = document.getElementById('popupImg'); const imgContainer = document.getElementById('popupImageContainer'); if(popupData.image) { imgEl.src = popupData.image; imgEl.classList.remove('hidden'); imgContainer.classList.remove('hidden'); } else { imgContainer.classList.add('hidden'); } document.getElementById('popupModal').classList.remove('hidden'); }
+        <!-- নোট: এখানে পরবর্তী অংশ বাকি আছে -->
+                function showPopup(popupData) { document.getElementById('popupMessage').innerText = popupData.message; const imgEl = document.getElementById('popupImg'); const imgContainer = document.getElementById('popupImageContainer'); if(popupData.image) { imgEl.src = popupData.image; imgEl.classList.remove('hidden'); imgContainer.classList.remove('hidden'); } else { imgContainer.classList.add('hidden'); } document.getElementById('popupModal').classList.remove('hidden'); }
         function closePopupModal() { document.getElementById('popupModal').classList.add('hidden'); }
         function openPoliciesModal() {
             const container = document.getElementById('policiesContent'); container.innerHTML = '';
@@ -1350,7 +1351,7 @@ function generatePlaceholderImage(text) {
                 return;
             }
 
-            const currentAdsOfType = cachedUserAds.filter(ad => (ad.adType || 'sell') === selectedAdType).length;
+            const currentAdsOfType = cachedUserAds ? cachedUserAds.filter(ad => (ad.adType || 'sell') === selectedAdType).length : 0;
             if (currentAdsOfType >= 5) {
                 let typeText = selectedAdType === 'sell' ? 'বিক্রয়ি' : (selectedAdType === 'buy' ? 'কেনার' : 'এক্সচেঞ্জ');
                 Swal.fire({ icon: 'error', title: 'লিমিট শেষ!', text: `আপনি সর্বোচ্চ ৫টি ${typeText} বিজ্ঞাপন দিতে পারবেন। দয়া করে পুরাতন বিজ্ঞাপন মুছে ফেলুন।` });
@@ -1387,7 +1388,7 @@ function generatePlaceholderImage(text) {
                 google.script.run.withSuccessHandler(res => {
                     showLoader(false);
                     if (res.success) {
-                        cachedUserAds = []; 
+                        cachedUserAds = null; // FIX APPLIED HERE
                         Swal.fire({ icon: 'success', title: 'সফল!', text: res.message, timer: 2000, showConfirmButton: false });
                         document.getElementById('adForm').reset();
                         ['imgPre1','imgPre2','imgPre3'].forEach(id => document.getElementById(id).classList.add('hidden'));
@@ -1410,7 +1411,7 @@ function generatePlaceholderImage(text) {
                     google.script.run.withSuccessHandler(res => {
                         showLoader(false);
                         if (res.success) {
-                            cachedUserAds = []; 
+                            cachedUserAds = null; // FIX APPLIED HERE
                             Swal.fire({ icon: 'success', title: 'সফল!', text: res.message, timer: 2000, showConfirmButton: false });
                             document.getElementById('adForm').reset();
                             ['imgPre1','imgPre2','imgPre3'].forEach(id => { document.getElementById(id).classList.add('hidden'); document.getElementById(id).src = ''; });
@@ -1501,8 +1502,8 @@ function generatePlaceholderImage(text) {
             if(password.length < 6) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'পাসওয়ার্ড ছোট!',
-                    text: 'পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে।',
+                    title: 'পাসওয়ার্ড ছোট!',
+                    text: 'পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে।',
                     confirmButtonColor: '#d33'
                 });
                 return;
@@ -1611,8 +1612,8 @@ function generatePlaceholderImage(text) {
                     localStorage.removeItem('sessionToken');
                     currentUser = null;
                     sessionToken = null;
-                    cachedUserAds = [];
-                    cachedUserRequests = []; // Clear Requests Cache
+                    cachedUserAds = null; // FIX APPLIED HERE
+                    cachedUserRequests = null; // FIX APPLIED HERE
                     updateAuthUI();
                     showView('homeView');
                     Swal.fire({ title: 'লগআউট!', text: 'আপনি সফলভাবে লগআউট হয়েছেন।', icon: 'success', timer: 1500, showConfirmButton: false });
@@ -1669,7 +1670,8 @@ function generatePlaceholderImage(text) {
         }
 
         function loadUserAds() {
-            if (cachedUserAds && cachedUserAds.length > 0) {
+            // Check cache (FIX APPLIED HERE)
+            if (cachedUserAds !== null) {
                 renderUserAdsList(cachedUserAds);
                 return;
             }
@@ -1696,7 +1698,8 @@ function generatePlaceholderImage(text) {
                 // লজিক: যদি ক্যাশে ডাটা থাকে তবে সেটি দেখাবে। 
                 // যদি ক্যাশ ফাঁকা থাকে (নতুন অ্যাড সাবমিটের পর এমনটা হয়), তবে সার্ভার থেকে ফ্রেশ ডাটা আনবে।
                 
-                if (cachedUserAds && cachedUserAds.length > 0) {
+                // Check cache (FIX APPLIED HERE)
+                if (cachedUserAds !== null) {
                     renderUserAdsList(cachedUserAds);
                 } else {
                     loadUserAds();
@@ -1731,7 +1734,7 @@ function generatePlaceholderImage(text) {
             google.script.run.withSuccessHandler(res => {
                 showLoader(false);
                 if(res.success) {
-                    cachedUserAds = []; 
+                    cachedUserAds = null; // FIX APPLIED HERE
                     loadUserAds(); 
                     Swal.fire({ icon: 'success', title: 'মুছে ফেলা হয়েছে!', text: res.message, timer: 2000, showConfirmButton: false });
                 } else {
@@ -1836,8 +1839,8 @@ function generatePlaceholderImage(text) {
         }
 
         function loadUserRequests() {
-            // Check cache
-            if (cachedUserRequests && cachedUserRequests.length > 0) {
+            // Check cache (FIX APPLIED HERE)
+            if (cachedUserRequests !== null) {
                 renderUserRequestsList(cachedUserRequests);
                 return;
             }
@@ -1865,20 +1868,21 @@ function toggleMyRequests() {
         arrow.classList.add('fa-chevron-up');
         
         // লজিক: যদি ক্যাশে ডাটা থাকে তবে সেটি দেখাবে। 
-                // যদি ক্যাশ ফাঁকা থাকে (নতুন রিকোয়েস্ট সাবমিটের পর এমনটা হয়), তবে সার্ভার থেকে ফ্রেশ ডাটা আনবে।
+        // যদি ক্যাশ ফাঁকা থাকে (নতুন রিকোয়েস্ট সাবমিটের পর এমনটা হয়), তবে সার্ভার থেকে ফ্রেশ ডাটা আনবে।
                 
-                if (cachedUserRequests && cachedUserRequests.length > 0) {
-                    renderUserRequestsList(cachedUserRequests);
-                } else {
-                    loadUserRequests();
-                }
-            } else {
-                // ড্রয়ারটি বর্তমানে ওপেন আছে, তাই এটি বন্ধ করা হচ্ছে
-                listContainer.classList.add('hidden');
-                arrow.classList.remove('fa-chevron-up');
-                arrow.classList.add('fa-chevron-down');
-            }
+        // Check cache (FIX APPLIED HERE)
+        if (cachedUserRequests !== null) {
+            renderUserRequestsList(cachedUserRequests);
+        } else {
+            loadUserRequests();
         }
+    } else {
+        // ড্রয়ারটি বর্তমানে ওপেন আছে, তাই এটি বন্ধ করা হচ্ছে
+        listContainer.classList.add('hidden');
+        arrow.classList.remove('fa-chevron-up');
+        arrow.classList.add('fa-chevron-down');
+    }
+}
 
         function confirmDeleteRequest(requestId, productName) {
             Swal.fire({
@@ -1903,7 +1907,7 @@ function toggleMyRequests() {
                 showLoader(false);
                 if(res.success) {
                     // Clear cache and reload
-                    cachedUserRequests = []; 
+                    cachedUserRequests = null; // FIX APPLIED HERE
                     loadUserRequests(); 
                     Swal.fire({ icon: 'success', title: 'মুছে ফেলা হয়েছে!', text: res.message, timer: 2000, showConfirmButton: false });
                 } else {

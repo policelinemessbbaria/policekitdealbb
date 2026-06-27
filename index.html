@@ -1,4 +1,4 @@
-;<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
@@ -101,6 +101,11 @@
     <h1>PoliceKitDealBB - sell buy exchange & more</h1>
     <p>আমাদের অভ্যন্তরীণ বিভিন্ন বিষয় সহজীকরণের লক্ষ্যে PoliceKitDealBB কাজ করে। এখানে স্মার্ট ফোনবুক, ই মিল সিস্টেম ইত্যাধিমধ্যেই যুক্ত আছে, পরবর্তীতে আরও ফিচার যুক্ত হতে পারে।</p>
     <img src="https://res.cloudinary.com/dkowkawiq/image/upload/v1781255340/20260612_150506_lqujgn.webp" alt="PoliceKitDealBB Logo">
+</div>
+<!-- ফেসবুক স্টাইল টপবার লোডার -->
+<div id="headerLoader" class="hidden items-center space-x-2 shrink-0">
+    <i class="fa-solid fa-circle-notch fa-spin text-blue-600 text-lg"></i>
+    <span class="text-sm font-bold text-blue-600">সাবমিট হচ্ছে...</span>
 </div>
 
         
@@ -582,7 +587,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadInitialData();
             updateAuthUI();
-            
+                syncPendingAdsToServer(); 
             const searchInput = document.getElementById('searchInput');
             searchInput.addEventListener('input', (e) => {
                 const clearBtn = document.getElementById('searchClearBtn');
@@ -621,7 +626,32 @@ const otpModalObserver = new MutationObserver((mutations) => {
 if(otpModalEl) otpModalObserver.observe(otpModalEl, { attributes: true });
         });
 
-        function showLoader(show) { document.getElementById('globalLoader').style.display = show ? 'flex' : 'none'; }
+function showLoader(show, message = 'দয়া করে অপেক্ষা করুন...') { 
+    document.getElementById('globalLoader').style.display = show ? 'flex' : 'none';
+    document.getElementById('globalLoader').querySelector('p').innerText = message;
+}
+
+// নতুন: টপবার লোডার দেখানোর ফাংশন
+function showHeaderLoader(show) {
+    const loader = document.getElementById('headerLoader');
+    const realContent = document.getElementById('realHeaderContent');
+    const skeleton = document.getElementById('headerSkeleton');
+    
+    if (show) {
+        realContent.classList.add('hidden');
+        skeleton.classList.add('hidden');
+        loader.classList.remove('hidden');
+        loader.classList.add('flex');
+    } else {
+        loader.classList.add('hidden');
+        loader.classList.remove('flex');
+        if(appData.settings.sitename) {
+            realContent.classList.remove('hidden');
+        } else {
+            skeleton.classList.remove('hidden');
+        }
+    }
+}
 
         function showView(viewId) {
             const activeElement = document.querySelector('.view-section.active');
@@ -1341,114 +1371,222 @@ function generatePlaceholderImage(text) {
     // ইমেজ ডাটা রিটার্ন করা
     return canvas.toDataURL('image/jpeg', 0.8);
 }
-        function handleAdSubmit(event) {
-            event.preventDefault();
-            
-            if (!currentUser) {
-                Swal.fire({ icon: 'warning', title: 'লগইন প্রয়োজন', text: 'বিজ্ঞাপন দিতে প্রথমে লগইন করুন।', confirmButtonColor: '#2563eb' });
-                showView('accountView');
-                return;
-            }
+function handleAdSubmit(event) {
+    event.preventDefault();
+    
+    if (!currentUser) {
+        Swal.fire({ icon: 'warning', title: 'লগইন প্রয়োজন', text: 'বিজ্ঞাপন দিতে প্রথমে লগইন করুন।', confirmButtonColor: '#2563eb' });
+        showView('accountView');
+        return;
+    }
 
-            
-const currentAdsOfType = (cachedUserAds || []).filter(ad => (ad.adType || 'sell') === selectedAdType).length;
-            if (currentAdsOfType >= 5) {
-                let typeText = selectedAdType === 'sell' ? 'বিক্রয়ি' : (selectedAdType === 'buy' ? 'কেনার' : 'এক্সচেঞ্জ');
-                Swal.fire({ icon: 'error', title: 'লিমিট শেষ!', text: `আপনি সর্বোচ্চ  ${typeText} বিজ্ঞাপন দেওয়ার লিমিটে পৌঁছে গেছেন। নতুন বিজ্ঞাপন দেওয়ার জন্য পুরাতন বিজ্ঞাপন ডিলিট করে ফেলতে হবে।` });
-                return;
-            }
+    const currentAdsOfType = (cachedUserAds || []).filter(ad => (ad.adType || 'sell') === selectedAdType).length;
+    if (currentAdsOfType >= 5) {
+        let typeText = selectedAdType === 'sell' ? 'বিক্রয়ি' : (selectedAdType === 'buy' ? 'কেনার' : 'এক্সচেঞ্জ');
+        Swal.fire({ icon: 'error', title: 'লিমিট শেষ!', text: `আপনি সর্বোচ্চ ${typeText} বিজ্ঞাপন দেওয়ার লিমিটে পৌঁছে গেছেন।` });
+        return;
+    }
 
-            showLoader(true);
-            const editId = document.getElementById('editProductId').value;
-            let finalPrice = 0; let finalDiscount = 0; let finalDescription = document.getElementById('adDescription').value;
-            if (selectedAdType === 'sell') { finalPrice = document.getElementById('adPrice').value; finalDiscount = document.getElementById('adDiscountPrice').value || 0; } 
-            else if (selectedAdType === 'buy') { finalPrice = document.getElementById('adMaxBudget').value; finalDiscount = 0; } 
-            else if (selectedAdType === 'exchange') { finalPrice = 0; finalDiscount = 0; const sizeInfo = document.getElementById('adSizeSwap').value; finalDescription = `সাইজ বিনিময়: ${sizeInfo}\n\n${finalDescription}`; }
-            
-            const imagesToUpload = [];
-            const files = [ { el: document.getElementById('imgInput1'), name: 'main.jpg' }, { el: document.getElementById('imgInput2'), name: 'img2.jpg' }, { el: document.getElementById('imgInput3'), name: 'img3.jpg' } ];
-            
-            // --- অটো প্লেসহোল্ডার জেনারেট লজিক ---
-            let hasImage = false;
-            // Check cropped data or file input
-            files.forEach(f => {
-                if(croppedImagesData[f.el.id] || (f.el.files && f.el.files[0])) hasImage = true;
-            });
+    showLoader(true, 'ছবি প্রসেস হচ্ছে...');
 
-            // যদি কোনো ইমেজ না থাকে, তবে প্রোডাক্টের নাম দিয়ে ইমেজ তৈরি করা
-            if (!hasImage) {
-                const productName = document.getElementById('adName').value || "Product";
-                const placeholderData = generatePlaceholderImage(productName);
-                imagesToUpload[0] = { data: placeholderData, name: 'placeholder.jpg' };
-                imagesToUpload[1] = null;
-                imagesToUpload[2] = null;
-                
-                const adPayload = { id: editId || null, userId: currentUser.userid, userEmail: currentUser.email, name: document.getElementById('adName').value, category: document.getElementById('adCategory').value, price: finalPrice, discountprice: finalDiscount, description: finalDescription, images: imagesToUpload, adType: selectedAdType };
-                const action = editId ? 'updateAd' : 'submitAd';
-                google.script.run.withSuccessHandler(res => {
-                    showLoader(false);
-                    if (res.success) {
-                        cachedUserAds = null; 
-                        Swal.fire({ icon: 'success', title: 'সফল!', text: res.message, timer: 2000, showConfirmButton: false });
-                        document.getElementById('adForm').reset();
-                        ['imgPre1','imgPre2','imgPre3'].forEach(id => document.getElementById(id).classList.add('hidden'));
-                        ['imgPlaceholder1','imgPlaceholder2','imgPlaceholder3'].forEach(id => document.getElementById(id).style.display = 'block');
-                        croppedImagesData = {}; // Reset crop data
-                        selectedAdType = 'sell'; showView('homeView');
-                    } else { Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.error }); }
-                }).withFailureHandler(err => { showLoader(false); Swal.fire({ icon: 'error', title: 'সার্ভার এরর', text: err }); })[action](adPayload, sessionToken);
-                return; // ফাংশন এখানেই শেষ
-            }
-            // -------------------------------------------------
+    const editId = document.getElementById('editProductId').value;
+    let finalPrice = 0; let finalDiscount = 0; let finalDescription = document.getElementById('adDescription').value;
+    
+    if (selectedAdType === 'sell') { finalPrice = document.getElementById('adPrice').value; finalDiscount = document.getElementById('adDiscountPrice').value || 0; } 
+    else if (selectedAdType === 'buy') { finalPrice = document.getElementById('adMaxBudget').value; finalDiscount = 0; } 
+    else if (selectedAdType === 'exchange') { finalPrice = 0; finalDiscount = 0; const sizeInfo = document.getElementById('adSizeSwap').value; finalDescription = `সাইজ বিনিময়: ${sizeInfo}\n\n${finalDescription}`; }
+    
+    const files = [ 
+        { el: document.getElementById('imgInput1'), name: 'main.jpg' }, 
+        { el: document.getElementById('imgInput2'), name: 'img2.jpg' }, 
+        { el: document.getElementById('imgInput3'), name: 'img3.jpg' } 
+    ];
+    
+    let hasImage = false;
+    files.forEach(f => {
+        if(croppedImagesData[f.el.id] || (f.el.files && f.el.files[0])) hasImage = true;
+    });
 
-            // যদি ইউজার ইমেজ আপলোড করে থাকে, তবে স্বাভাবিক প্রসেস
-            let loadedCount = 0;
-            const checkAndSend = () => {
-                loadedCount++;
-                if(loadedCount === files.length) {
-                    const adPayload = { id: editId || null, userId: currentUser.userid, userEmail: currentUser.email, name: document.getElementById('adName').value, category: document.getElementById('adCategory').value, price: finalPrice, discountprice: finalDiscount, description: finalDescription, images: imagesToUpload, adType: selectedAdType };
-                    const action = editId ? 'updateAd' : 'submitAd';
-                    google.script.run.withSuccessHandler(res => {
-                        showLoader(false);
-                        if (res.success) {
-                            cachedUserAds = null; 
-                            Swal.fire({ icon: 'success', title: 'সফল!', text: res.message, timer: 2000, showConfirmButton: false });
-                            document.getElementById('adForm').reset();
-                            ['imgPre1','imgPre2','imgPre3'].forEach(id => { document.getElementById(id).classList.add('hidden'); document.getElementById(id).src = ''; });
-                            ['imgPlaceholder1','imgPlaceholder2','imgPlaceholder3'].forEach(id => document.getElementById(id).style.display = 'block');
-                            croppedImagesData = {}; // Reset crop data
-                            selectedAdType = 'sell'; showView('homeView');
-                        } else { Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.error }); }
-                    }).withFailureHandler(err => { showLoader(false); Swal.fire({ icon: 'error', title: 'সার্ভার এরর', text: err }); })[action](adPayload, sessionToken);
-                }
+    if (!hasImage) {
+        const productName = document.getElementById('adName').value || "Product";
+        const placeholderData = generatePlaceholderImage(productName);
+        var finalPayload = { 
+            id: editId || null, userId: currentUser.userid, userEmail: currentUser.email, 
+            name: document.getElementById('adName').value, category: document.getElementById('adCategory').value, 
+            price: finalPrice, discountprice: finalDiscount, description: finalDescription, 
+            images: [{ data: placeholderData, name: 'placeholder.jpg' }, null, null], adType: selectedAdType 
+        };
+        
+        if (editId) { submitAdToServer(finalPayload, 'updateAd'); } 
+        else { triggerFacebookStyleSubmit(finalPayload); }
+        return; 
+    }
+
+    let imagesToUpload = [null, null, null];
+    let loadedCount = 0;
+    
+    const checkAndFire = () => {
+        loadedCount++;
+        if(loadedCount === files.length) {
+            var finalPayload = { 
+                id: editId || null, userId: currentUser.userid, userEmail: currentUser.email, 
+                name: document.getElementById('adName').value, category: document.getElementById('adCategory').value, 
+                price: finalPrice, discountprice: finalDiscount, description: finalDescription, 
+                images: imagesToUpload, adType: selectedAdType 
             };
-            files.forEach((f, idx) => {
-                
-                // === NEW LOGIC: Check for cropped data first ===
-                if (croppedImagesData[f.el.id]) {
-                    imagesToUpload[idx] = { data: croppedImagesData[f.el.id], name: f.name + '_cropped.jpg' };
-                    checkAndSend();
-                    return; // Skip file processing
-                }
-                // ===============================================
-
-                // Existing logic: Handle normal file upload
-                if(f.el.files && f.el.files[0]) { 
-                    compressImage(f.el.files[0], 800, 800, (base64String) => { 
-                        imagesToUpload[idx] = { data: base64String, name: f.name }; 
-                        checkAndSend(); 
-                    }); 
-                } else {
-                    if(editId) { 
-                        const existingImg = document.getElementById('imgPre' + (idx+1)).src; 
-                        imagesToUpload[idx] = existingImg ? { data: existingImg, name: f.name } : null; 
-                    } else { 
-                        imagesToUpload[idx] = null; 
-                    }
-                    checkAndSend();
-                }
-            });
+            
+            if (editId) { submitAdToServer(finalPayload, 'updateAd'); } 
+            else { triggerFacebookStyleSubmit(finalPayload); }
         }
+    };
+
+    files.forEach((f, idx) => {
+        if (croppedImagesData[f.el.id]) {
+            imagesToUpload[idx] = { data: croppedImagesData[f.el.id], name: f.name + '_cropped.jpg' };
+            checkAndFire();
+        } else if(f.el.files && f.el.files[0]) { 
+            compressImage(f.el.files[0], 800, 800, (base64String) => { 
+                imagesToUpload[idx] = { data: base64String, name: f.name }; 
+                checkAndFire(); 
+            }); 
+        } else {
+            if(editId) { 
+                const existingImg = document.getElementById('imgPre' + (idx+1)).src; 
+                imagesToUpload[idx] = existingImg ? { data: existingImg, name: f.name } : null; 
+            } else { imagesToUpload[idx] = null; }
+            checkAndFire();
+        }
+    });
+}
+
+// ==========================================
+// ফেসবুক স্টাইল সাবমিট ও স্বয়ংক্রিয় রিট্রাই সিস্টেম
+// ==========================================
+
+// ১. এডিটের জন্য সার্ভারের রেসপন্সের জন্য অপেক্ষা করবে
+function submitAdToServer(adPayload, actionName) {
+    showLoader(true, 'সার্ভারে আপডেট করা হচ্ছে...');
+    google.script.run.withSuccessHandler(res => {
+        showLoader(false);
+        if (res.success) {
+            cachedUserAds = null; 
+            Swal.fire({ icon: 'success', title: 'সফল!', text: res.message, timer: 2000, showConfirmButton: false });
+            resetAdForm();
+        } else { Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.error }); }
+    }).withFailureHandler(err => { 
+        showLoader(false); 
+        Swal.fire({ icon: 'error', title: 'সার্ভার এরর', text: err }); 
+    })[actionName](adPayload, sessionToken);
+}
+
+// ২. নতুন বিজ্ঞাপনের জন্য ফেসবুক স্টাইল টপবার লোডার চালু করা
+function triggerFacebookStyleSubmit(adPayload) {
+    showLoader(false); // ছবি প্রসেসিং লোডার বন্ধ
+    
+    resetAdForm(); // ফর্ম ক্লিয়ার করে হোমে নিয়ে যাওয়া হবে
+    showView('homeView');
+    
+    showHeaderLoader(true); // টপবারে "সাবমিট হচ্ছে..." দেখাবে
+
+    // লোকাল স্টোরেজে সেভ
+    const pendingAds = JSON.parse(localStorage.getItem('pending_ads') || '[]');
+    adPayload.retryCount = 0; 
+    pendingAds.push(adPayload);
+    localStorage.setItem('pending_ads', JSON.stringify(pendingAds));
+
+    // ব্যাকগ্রাউন্ডে পাঠানো শুরু
+    syncPendingAdsToServer();
+}
+
+// ৩. ব্যাকগ্রাউন্ডে ডাটা পাঠানো এবং স্বয়ংক্রিয় রিট্রাই কন্ট্রোলার
+function syncPendingAdsToServer() {
+    let pendingAds = JSON.parse(localStorage.getItem('pending_ads') || '[]');
+    if (pendingAds.length === 0) return;
+
+    const adPayload = pendingAds[0];
+
+    // যদি ৩ বার চেষ্টা করেও ব্যর্থ হয়
+    if (adPayload.retryCount >= 3) {
+        showHeaderLoader(false); // টপবার লোডার বন্ধ
+        pendingAds.shift();
+        localStorage.setItem('pending_ads', JSON.stringify(pendingAds));
+        
+        // ইউজারকে ফাইনাল এরর দেখাবে এবং ম্যানুয়ালি চেষ্টা করার অপশন দেবে
+        Swal.fire({
+            icon: 'error',
+            title: 'সাবমিট ব্যর্থ হয়েছে',
+            text: 'নেটওয়ার্ক বা সার্ভার সমস্যার কারণে পোস্টটি জমা হয়নি।',
+            showCancelButton: true,
+            confirmButtonColor: '#2563eb',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'আবার চেষ্টা করুন',
+            cancelButtonText: 'বাতিল করুন'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // ইউজার চাইলে কাউন্টার ০ করে আবার চেষ্টা করবে
+                adPayload.retryCount = 0;
+                pendingAds.unshift(adPayload);
+                localStorage.setItem('pending_ads', JSON.stringify(pendingAds));
+                showHeaderLoader(true);
+                syncPendingAdsToServer();
+            }
+        });
+        return; 
+    }
+
+    google.script.run
+        .withSuccessHandler(res => {
+            if (res.success) {
+                showHeaderLoader(false); // লোডার বন্ধ
+                pendingAds.shift();
+                localStorage.setItem('pending_ads', JSON.stringify(pendingAds));
+                cachedUserAds = null;
+                
+                // এখন আসল সফল মেসেজটি দেখাবে
+                Swal.fire({ 
+                    icon: 'success', 
+                    title: 'সফলভাবে সাবমিট হয়েছে', 
+                    text: 'আপনার বিজ্ঞাপনটি অ্যাডমিন রিভিউয়ের জন্য পাঠানো হয়েছে।', 
+                    timer: 2500, 
+                    showConfirmButton: false 
+                });
+                
+                if(pendingAds.length > 0) {
+                    setTimeout(syncPendingAdsToServer, 1000);
+                }
+            } else {
+                handleBackgroundFailure(pendingAds, adPayload, res.error);
+            }
+        })
+        .withFailureHandler(err => {
+            handleBackgroundFailure(pendingAds, adPayload, err);
+        })
+        .submitAd(adPayload, sessionToken);
+}
+
+// ৪. ব্যর্থ হলে ২ সেকেন্ড পর নিজে নিজে আবার চেষ্টা করবে
+function handleBackgroundFailure(pendingAds, adPayload, errorMsg) {
+    console.error("Background Sync Failed (Attempt " + (adPayload.retryCount + 1) + "):", errorMsg);
+    
+    adPayload.retryCount += 1;
+    pendingAds[0] = adPayload;
+    localStorage.setItem('pending_ads', JSON.stringify(pendingAds));
+    
+    // ২ সেকেন্ড অপেক্ষা করে নীরবে আবার চেষ্টা করবে (ইউজার বুঝতে পারবে না)
+    setTimeout(() => {
+        syncPendingAdsToServer();
+    }, 2000);
+}
+
+// ৫. ফর্ম রিসেট করার হেল্পার ফাংশন
+function resetAdForm() {
+    document.getElementById('adForm').reset();
+    document.getElementById('editProductId').value = '';
+    ['imgPre1','imgPre2','imgPre3'].forEach(id => { document.getElementById(id).classList.add('hidden'); document.getElementById(id).src = ''; });
+    ['imgPlaceholder1','imgPlaceholder2','imgPlaceholder3'].forEach(id => document.getElementById(id).style.display = 'block');
+    croppedImagesData = {}; 
+    selectedAdType = 'sell';
+}
 
         function toggleAuthTab(type) {
             if (type === 'login') {

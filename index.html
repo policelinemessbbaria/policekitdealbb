@@ -209,7 +209,7 @@
                     
                     <div class="mb-4">
                         <label class="block text-sm font-semibold text-gray-700 mb-1">পণ্যের নাম *</label>
-                        <input type="text" id="adName" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="যেমন: iPhone 12 Pro">
+                        <input type="text" id="adName" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="যেমন: পিটি স্যু ৭ নাম্বার">
                     </div>
 
                     <div class="mb-4">
@@ -490,7 +490,7 @@
     // ============================================================
     // VERCEL/NETLIFY HOSTING HELPER (POLYFILL FOR GOOGLE.SCRIPT.RUN)
     // ============================================================
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxum-vsRUcb0ORKOZEIHaJ3w5FfnMLO6FPPV7R_37ARk1lyKzUaToxN5GpidYZsUlsi/exec"; 
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbztyV5lpG-HmVqeIwHPXridSHrGL8T0YxvLeJ-8ZoJte029iVeCtfdPv6Qnzkc_H9nv/exec"; 
 
     if (typeof google === 'undefined' || !google.script) {
         window.google = {
@@ -1353,7 +1353,7 @@ function generatePlaceholderImage(text) {
             const currentAdsOfType = cachedUserAds.filter(ad => (ad.adType || 'sell') === selectedAdType).length;
             if (currentAdsOfType >= 5) {
                 let typeText = selectedAdType === 'sell' ? 'বিক্রয়ি' : (selectedAdType === 'buy' ? 'কেনার' : 'এক্সচেঞ্জ');
-                Swal.fire({ icon: 'error', title: 'লিমিট শেষ!', text: `আপনি সর্বোচ্চ ৫টি ${typeText} বিজ্ঞাপন দিতে পারবেন। দয়া করে পুরাতন বিজ্ঞাপন মুছে ফেলুন।` });
+                Swal.fire({ icon: 'error', title: 'লিমিট শেষ!', text: `আপনি সর্বোচ্চ  ${typeText} বিজ্ঞাপন দেওয়ার লিমিটে পৌঁছে গেছেন। নতুন বিজ্ঞাপন দেওয়ার জন্য পুরাতন বিজ্ঞাপন ডিলিট করে ফেলতে হবে।` });
                 return;
             }
 

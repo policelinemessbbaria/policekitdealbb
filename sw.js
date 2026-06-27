@@ -1,4 +1,4 @@
-const CACHE_NAME = 'police-phonebook-v7'; // ভার্সন চেঞ্জ করেছি (v1 থেকে v2)
+const CACHE_NAME = 'police-phonebook-v8'; // ভার্সন চেঞ্জ করেছি (v1 থেকে v2)
 
 const ASSETS = [
   './',

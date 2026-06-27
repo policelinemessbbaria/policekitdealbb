@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+;<!DOCTYPE html>
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
@@ -1350,7 +1350,8 @@ function generatePlaceholderImage(text) {
                 return;
             }
 
-            const currentAdsOfType = cachedUserAds.filter(ad => (ad.adType || 'sell') === selectedAdType).length;
+            
+const currentAdsOfType = (cachedUserAds || []).filter(ad => (ad.adType || 'sell') === selectedAdType).length;
             if (currentAdsOfType >= 5) {
                 let typeText = selectedAdType === 'sell' ? 'বিক্রয়ি' : (selectedAdType === 'buy' ? 'কেনার' : 'এক্সচেঞ্জ');
                 Swal.fire({ icon: 'error', title: 'লিমিট শেষ!', text: `আপনি সর্বোচ্চ  ${typeText} বিজ্ঞাপন দেওয়ার লিমিটে পৌঁছে গেছেন। নতুন বিজ্ঞাপন দেওয়ার জন্য পুরাতন বিজ্ঞাপন ডিলিট করে ফেলতে হবে।` });
@@ -1668,20 +1669,29 @@ function generatePlaceholderImage(text) {
             });
         }
 
-        function loadUserAds() {
-            if (cachedUserAds !== null) {
-                renderUserAdsList(cachedUserAds);
-                return;
-            }
-            const listContainer = document.getElementById('myAdsList');
-            listContainer.innerHTML = '<p class="text-xs text-gray-500">বিজ্ঞাপন তালিকা লোড হচ্ছে...</p>';
-            google.script.run.withSuccessHandler(res => {
-                if (res.success) {
-                    cachedUserAds = res.ads; 
-                    renderUserAdsList(cachedUserAds);
-                }
-            }).getUserAds(currentUser.userid, sessionToken, currentUser.email);
+// ✅ পুরো ফাংশনটি এটা দিয়ে বদলে দিন
+function loadUserAds() {
+    if (cachedUserAds !== null) {
+        renderUserAdsList(cachedUserAds);
+        return;
+    }
+    const listContainer = document.getElementById('myAdsList');
+    listContainer.innerHTML = '<p class="text-xs text-gray-500">বিজ্ঞাপন তালিকা লোড হচ্ছে...</p>';
+    google.script.run.withSuccessHandler(res => {
+        if (res.success) {
+            cachedUserAds = res.ads; 
+            renderUserAdsList(cachedUserAds);
+        } else {
+            // সার্ভার থেকে success: false আসলে খালি অ্যারে সেভ করে রেন্ডার করবে
+            cachedUserAds = [];
+            renderUserAdsList(cachedUserAds);
         }
+    }).withFailureHandler(err => {
+        // নেটওয়ার্ক এরর হলেও আটকে থাকবে না
+        cachedUserAds = [];
+        renderUserAdsList(cachedUserAds);
+    }).getUserAds(currentUser.userid, sessionToken, currentUser.email);
+}
 
         function toggleMyAds() {
             const listContainer = document.getElementById('myAdsListContainer');
@@ -1835,24 +1845,31 @@ function generatePlaceholderImage(text) {
             });
         }
 
-        function loadUserRequests() {
-            // Check cache
-            if (cachedUserRequests !== null) {
-                renderUserRequestsList(cachedUserRequests);
-                return;
-            }
+// ✅ পুরো ফাংশনটি এটা দিয়ে বদলে দিন
+function loadUserRequests() {
+    if (cachedUserRequests !== null) {
+        renderUserRequestsList(cachedUserRequests);
+        return;
+    }
 
-            const listContainer = document.getElementById('myRequestsList');
-            listContainer.innerHTML = '<p class="text-xs text-gray-500">রিকোয়েস্ট তালিকা লোড হচ্ছে...</p>';
-            
-            // Fetch from backend using mobile number as identifier
-            google.script.run.withSuccessHandler(res => {
-                if (res.success) {
-                    cachedUserRequests = res.requests; // Save to cache
-                    renderUserRequestsList(cachedUserRequests);
-                }
-            }).getUserRequests(currentUser.mobilenumber, sessionToken);
+    const listContainer = document.getElementById('myRequestsList');
+    listContainer.innerHTML = '<p class="text-xs text-gray-500">রিকোয়েস্ট তালিকা লোড হচ্ছে...</p>';
+    
+    google.script.run.withSuccessHandler(res => {
+        if (res.success) {
+            cachedUserRequests = res.requests; 
+            renderUserRequestsList(cachedUserRequests);
+        } else {
+            // সার্ভার থেকে success: false আসলে খালি অ্যারে সেভ করে রেন্ডার করবে
+            cachedUserRequests = [];
+            renderUserRequestsList(cachedUserRequests);
         }
+    }).withFailureHandler(err => {
+        // নেটওয়ার্ক এরর হলেও আটকে থাকবে না
+        cachedUserRequests = [];
+        renderUserRequestsList(cachedUserRequests);
+    }).getUserRequests(currentUser.mobilenumber, sessionToken);
+}
 
 function toggleMyRequests() {
     const listContainer = document.getElementById('myRequestsListContainer');

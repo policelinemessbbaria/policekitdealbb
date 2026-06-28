@@ -77,14 +77,13 @@
         @keyframes shine {
             to { background-position-x: -200%; }
         }
-        /* টপ প্রোগ্রেস বার পালসিং ইফেক্ট */
-@keyframes progressPulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
+/* হেডারের নিচে লোডার স্লাইড ডাউন ইফেক্ট */
+@keyframes slideDown {
+    from { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; margin-bottom: -10px; }
+    to { opacity: 1; max-height: 50px; padding-top: 10px; padding-bottom: 10px; margin-bottom: 0; }
 }
-.progress-active {
-    animation: progressPulse 1.5s infinite ease-in-out;
+.loader-show {
+    animation: slideDown 0.3s ease-out forwards;
 }
     </style>
 </head>
@@ -111,10 +110,6 @@
     <p>আমাদের অভ্যন্তরীণ বিভিন্ন বিষয় সহজীকরণের লক্ষ্যে PoliceKitDealBB কাজ করে। এখানে স্মার্ট ফোনবুক, ই মিল সিস্টেম ইত্যাধিমধ্যেই যুক্ত আছে, পরবর্তীতে আরও ফিচার যুক্ত হতে পারে।</p>
     <img src="https://res.cloudinary.com/dkowkawiq/image/upload/v1781255340/20260612_150506_lqujgn.webp" alt="PoliceKitDealBB Logo">
 </div>
-<!-- ইউটিউব স্টাইল টপ প্রোগ্রেস বার -->
-<div id="topProgressBar" class="absolute top-0 left-0 h-1 bg-blue-600 z-[60] hidden transition-all duration-500 ease-out" style="width: 0%;"></div>
-
-        
         <!-- Search Bar Container -->
         <div class="flex-1 max-w-md relative">
             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -131,6 +126,13 @@
             </button>
         </div>
     </header>
+        <!-- হেডারের ঠিক নিচে স্ট্যাটাস বার -->
+    <div id="headerLoader" class="hidden relative bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 py-2.5 px-4 z-40 text-center shadow-sm transition-all duration-300">
+        <div class="flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-circle-notch fa-spin text-blue-600 text-sm"></i>
+            <span class="text-sm font-semibold text-blue-700">আপনার নতুন বিজ্ঞাপনটি সাবমিট হচ্ছে.....</span>
+        </div>
+    </div>
 
     <main class="max-w-md mx-auto px-4 py-4">
 
@@ -654,28 +656,32 @@ function submitAdToServer(adPayload, actionName) {
     })[actionName](adPayload, sessionToken);
 }
 
-// নতুন: ইউটিউব স্টাইল টপ প্রোগ্রেস বার কন্ট্রোলার
+// হেডারের নিচে টেক্সট লোডার কন্ট্রোলার
 function showHeaderLoader(show) {
-    const bar = document.getElementById('topProgressBar');
+    const loader = document.getElementById('headerLoader');
     
     if (show) {
-        bar.classList.remove('hidden');
-        bar.style.width = '0%';
-        
-        // একটু পর বারটি ৮০% পর্যন্ত নিয়ে যাবে এবং জ্বলজ্বল করবে
-        setTimeout(() => {
-            bar.style.width = '80%';
-            bar.classList.add('progress-active');
-        }, 50);
+        loader.classList.remove('hidden');
+        // সুন্দরভাবে নিচে নেমে আসার অ্যানিমেশন
+        loader.classList.add('loader-show');
     } else {
-        // কাজ শেষ হলে দ্রুত ১০০% করে দেবে এবং চলে যাবে
-        bar.classList.remove('progress-active');
-        bar.style.width = '100%';
+        // চলে যাওয়ার সময় দ্রুত উপরে উঠে চলে যাওয়া
+        loader.style.transition = 'all 0.2s ease-in';
+        loader.style.opacity = '0';
+        loader.style.maxHeight = '0';
+        loader.style.padding = '0';
+        loader.style.marginBottom = '-10px';
         
         setTimeout(() => {
-            bar.classList.add('hidden');
-            bar.style.width = '0%'; // পরবর্তী ব্যবহারের জন্য রিসেট করা হলো
-        }, 500);
+            loader.classList.add('hidden');
+            loader.classList.remove('loader-show');
+            // পরবর্তী ব্যবহারের জন্য স্টাইল রিসেট করা হলো
+            loader.style.transition = '';
+            loader.style.opacity = '';
+            loader.style.maxHeight = '';
+            loader.style.padding = '';
+            loader.style.marginBottom = '';
+        }, 200);
     }
 }
 

@@ -631,6 +631,28 @@ const otpModalObserver = new MutationObserver((mutations) => {
 });
 if(otpModalEl) otpModalObserver.observe(otpModalEl, { attributes: true });
         });
+        // আপডেটেড গ্লোবাল লোডার
+function showLoader(show, message = 'দয়া করে অপেক্ষা করুন...') { 
+    document.getElementById('globalLoader').style.display = show ? 'flex' : 'none';
+    document.getElementById('globalLoader').querySelector('p').innerText = message;
+}
+
+// এডিট মোডের জন্য আপডেটেড ফাংশন
+function submitAdToServer(adPayload, actionName) {
+    showLoader(true, 'সার্ভারে আপডেট করা হচ্ছে...');
+    google.script.run.withSuccessHandler(res => {
+        showLoader(false);
+        if (res.success) {
+            cachedUserAds = null; 
+            Swal.fire({ icon: 'success', title: 'সফল!', text: res.message, timer: 2000, showConfirmButton: false });
+            resetAdForm();
+            showView('accountView'); // এডিট করার পর অ্যাকাউন্ট পেজে ফেরত পাঠানো হলো
+        } else { Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.error }); }
+    }).withFailureHandler(err => { 
+        showLoader(false); 
+        Swal.fire({ icon: 'error', title: 'সার্ভার এরর', text: err }); 
+    })[actionName](adPayload, sessionToken);
+}
 
 // নতুন: ইউটিউব স্টাইল টপ প্রোগ্রেস বার কন্ট্রোলার
 function showHeaderLoader(show) {
@@ -2241,4 +2263,3 @@ function toggleMyRequests() {
     </script>
 </body>
 </html>
-okk

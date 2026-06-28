@@ -2031,34 +2031,37 @@ function loadUserRequests() {
     const listContainer = document.getElementById('myRequestsList');
     listContainer.innerHTML = '<p class="text-xs text-gray-500">রিকোয়েস্ট তালিকা লোড হচ্ছে...</p>';
     
-    google.script.run.withSuccessHandler(res => {
-        if (res.success) {
-            cachedUserRequests = res.requests; 
-            renderUserRequestsList(cachedUserRequests);
-        } else {
-            // সার্ভার থেকে success: false আসলে খালি অ্যারে সেভ করে রেন্ডার করবে
+    google.script.run
+        .withSuccessHandler(res => {
+            if (res.success) {
+                cachedUserRequests = res.requests; 
+                renderUserRequestsList(cachedUserRequests);
+            } else {
+                // সার্ভার থেকে success: false আসলে খালি অ্যারে সেভ করে রেন্ডার করবে
+                cachedUserRequests = [];
+                renderUserRequestsList(cachedUserRequests);
+            }
+        })
+        .withFailureHandler(err => {
+            // নেটওয়ার্ক এরর হলেও আটকে থাকবে না
             cachedUserRequests = [];
             renderUserRequestsList(cachedUserRequests);
-        }
-    }).withFailureHandler(err => {
-        // নেটওয়ার্ক এরর হলেও আটকে থাকবে না
-        cachedUserRequests = [];
-        renderUserRequestsList(cachedUserRequests);
-// ✅ ঠিক - ৩টি আর্গুমেন্ট পাঠাচ্ছে
-}).getUserRequests(currentUser.mobilenumber, sessionToken, currentUser.email);
+        })
+        .getUserRequests(currentUser.mobilenumber, sessionToken, currentUser.email);
+}
 
-function toggleMyRequests() {
-    const listContainer = document.getElementById('myRequestsListContainer');
-    const arrow = document.getElementById('myRequestsArrow');
-    
-    if (listContainer.classList.contains('hidden')) {
-        // ড্রয়েরটি বর্তমানে বন্ধ আছে, তাই এটি ওপেন করা হচ্ছে
-        listContainer.classList.remove('hidden');
-        arrow.classList.remove('fa-chevron-down');
-        arrow.classList.add('fa-chevron-up');
-        
-        // লজিক: যদি ক্যাশে ডাটা থাকে তবে সেটি দেখাবে। 
-                // যদি ক্যাশ ফাঁকা থাকে (নতুন রিকোয়েস্ট সাবমিটের পর এমনটা হয়), তবে সার্ভার থেকে ফ্রেশ ডাটা আনবে।
+        function toggleMyRequests() {
+            const listContainer = document.getElementById('myRequestsListContainer');
+            const arrow = document.getElementById('myRequestsArrow');
+            
+            if (listContainer.classList.contains('hidden')) {
+                // ড্রয়েরটি বর্তমানে বন্ধ আছে, তাই এটি ওপেন করা হচ্ছে
+                listContainer.classList.remove('hidden');
+                arrow.classList.remove('fa-chevron-down');
+                arrow.classList.add('fa-chevron-up');
+                
+                // লজিক: যদি ক্যাশে ডাটা থাকে তবে সেটি দেখাবে। 
+                // যদি ক্যাশ ফাঁকা থাকে (নতুন রিকোয়েস্ট সাবমিটের পর এমনটা হয়), তবে সার্ভার থেকে ফ্রেশ ডাটা আনবে。
                 
                 if (cachedUserRequests !== null) {
                     renderUserRequestsList(cachedUserRequests);

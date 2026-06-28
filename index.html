@@ -77,6 +77,15 @@
         @keyframes shine {
             to { background-position-x: -200%; }
         }
+        /* টপ প্রোগ্রেস বার পালসিং ইফেক্ট */
+@keyframes progressPulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+.progress-active {
+    animation: progressPulse 1.5s infinite ease-in-out;
+}
     </style>
 </head>
 <body>
@@ -102,11 +111,8 @@
     <p>আমাদের অভ্যন্তরীণ বিভিন্ন বিষয় সহজীকরণের লক্ষ্যে PoliceKitDealBB কাজ করে। এখানে স্মার্ট ফোনবুক, ই মিল সিস্টেম ইত্যাধিমধ্যেই যুক্ত আছে, পরবর্তীতে আরও ফিচার যুক্ত হতে পারে।</p>
     <img src="https://res.cloudinary.com/dkowkawiq/image/upload/v1781255340/20260612_150506_lqujgn.webp" alt="PoliceKitDealBB Logo">
 </div>
-<!-- ফেসবুক স্টাইল টপবার লোডার -->
-<div id="headerLoader" class="hidden items-center space-x-2 shrink-0">
-    <i class="fa-solid fa-circle-notch fa-spin text-blue-600 text-lg"></i>
-    <span class="text-sm font-bold text-blue-600">সাবমিট হচ্ছে...</span>
-</div>
+<!-- ইউটিউব স্টাইল টপ প্রোগ্রেস বার -->
+<div id="topProgressBar" class="absolute top-0 left-0 h-1 bg-blue-600 z-[60] hidden transition-all duration-500 ease-out" style="width: 0%;"></div>
 
         
         <!-- Search Bar Container -->
@@ -626,30 +632,28 @@ const otpModalObserver = new MutationObserver((mutations) => {
 if(otpModalEl) otpModalObserver.observe(otpModalEl, { attributes: true });
         });
 
-function showLoader(show, message = 'দয়া করে অপেক্ষা করুন...') { 
-    document.getElementById('globalLoader').style.display = show ? 'flex' : 'none';
-    document.getElementById('globalLoader').querySelector('p').innerText = message;
-}
-
-// নতুন: টপবার লোডার দেখানোর ফাংশন
+// নতুন: ইউটিউব স্টাইল টপ প্রোগ্রেস বার কন্ট্রোলার
 function showHeaderLoader(show) {
-    const loader = document.getElementById('headerLoader');
-    const realContent = document.getElementById('realHeaderContent');
-    const skeleton = document.getElementById('headerSkeleton');
+    const bar = document.getElementById('topProgressBar');
     
     if (show) {
-        realContent.classList.add('hidden');
-        skeleton.classList.add('hidden');
-        loader.classList.remove('hidden');
-        loader.classList.add('flex');
+        bar.classList.remove('hidden');
+        bar.style.width = '0%';
+        
+        // একটু পর বারটি ৮০% পর্যন্ত নিয়ে যাবে এবং জ্বলজ্বল করবে
+        setTimeout(() => {
+            bar.style.width = '80%';
+            bar.classList.add('progress-active');
+        }, 50);
     } else {
-        loader.classList.add('hidden');
-        loader.classList.remove('flex');
-        if(appData.settings.sitename) {
-            realContent.classList.remove('hidden');
-        } else {
-            skeleton.classList.remove('hidden');
-        }
+        // কাজ শেষ হলে দ্রুত ১০০% করে দেবে এবং চলে যাবে
+        bar.classList.remove('progress-active');
+        bar.style.width = '100%';
+        
+        setTimeout(() => {
+            bar.classList.add('hidden');
+            bar.style.width = '0%'; // পরবর্তী ব্যবহারের জন্য রিসেট করা হলো
+        }, 500);
     }
 }
 
@@ -2237,3 +2241,4 @@ function toggleMyRequests() {
     </script>
 </body>
 </html>
+okk

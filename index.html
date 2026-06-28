@@ -503,62 +503,67 @@
     // ============================================================
     // VERCEL/NETLIFY HOSTING HELPER (POLYFILL FOR GOOGLE.SCRIPT.RUN)
     // ============================================================
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby0SPCvOftqHqS9X3l4YRZa3rLfGkIVJbCsOvPI8lhOEfJZLYAEdXNvGzI6VZBKjZiT/exec"; 
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzx1fPgDNErWcAA-gBhBboR8wV79NzL0uqBzyGdgGDJ3ND9bQgXAl6kcXGdrFLa3UWx/exec"; 
 
-    if (typeof google === 'undefined' || !google.script) {
-        window.google = {
-            script: {
-                run: (() => {
-                    let successHandler = (res) => console.log("Success:", res);
-                    let failureHandler = (err) => console.error("Failure:", err);
+if (typeof google === 'undefined' || !google.script) {
+    window.google = {
+        script: {
+            run: (() => {
+                let successHandler = (res) => console.log("Success:", res);
+                let failureHandler = (err) => console.error("Failure:", err);
 
-                    const handlerChain = {
-                        withSuccessHandler: function(callback) {
-                            successHandler = callback;
-                            return this;
-                        },
-                        withFailureHandler: function(callback) {
-                            failureHandler = callback;
-                            return this;
+                const handlerChain = {
+                    withSuccessHandler: function(callback) {
+                        successHandler = callback;
+                        return this;
+                    },
+                    withFailureHandler: function(callback) {
+                        failureHandler = callback;
+                        return this;
+                    }
+                };
+
+                return new Proxy(handlerChain, {
+                    get: function(target, prop) {
+                        if (prop in target) {
+                            return target[prop];
                         }
-                    };
 
-                    return new Proxy(handlerChain, {
-                        get: function(target, prop) {
-                            if (prop in target) {
-                                return target[prop];
-                            }
-
-                            return function(...args) {
-                                fetch(GAS_WEB_APP_URL, {
-                                    method: 'POST',
-                                    mode: 'cors',
-                                    headers: {
-                                        'Content-Type': 'text/plain;charset=utf-8'
-                                    },
-                                    body: JSON.stringify({
-                                        functionName: prop,
-                                        arguments: args
-                                    })
+                        return function(...args) {
+                            fetch(GAS_WEB_APP_URL, {
+                                method: 'POST',
+                                mode: 'cors',
+                                headers: {
+                                    'Content-Type': 'text/plain;charset=utf-8'
+                                },
+                                body: JSON.stringify({
+                                    functionName: prop,
+                                    arguments: args
                                 })
-                                .then(response => response.json())
-                                .then(res => {
-                                    if (res && res.success === false && res.error) {
-                                        failureHandler(res.error);
-                                    } else {
-                                        successHandler(res);
-                                    }
-                                })
-                                .catch(err => {
-                                    failureHandler(err.message || err);
-                                });
-                            };
-                        }
-                    });
-                })()
-            }
-        };
-    }
+                            })
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error('HTTP ' + response.status);
+                                }
+                                return response.json();
+                            })
+                            .then(res => {
+                                // ✅ ফিক্স: সব রেসপন্স successHandler-এ যাবে
+                                // ফ্রন্টএন্ডের নিজস্ব successHandler যেমন res.success চেক করে
+                                // ঠিক সেভাবেই {success: false, remainingSeconds: 300} হ্যান্ডেল করবে
+                                successHandler(res);
+                            })
+                            .catch(err => {
+                                // ✅ শুধুমাত্র নেটওয়ার্ক/পার্সিং এরর failureHandler-এ যাবে
+                                failureHandler(err.message || err);
+                            });
+                        };
+                    }
+                });
+            })()
+        }
+    };
+}
     
         let appData = { settings: {}, categories: [], products: [], banners: [], popups: [], policies: {} };
         let currentUser = JSON.parse(localStorage.getItem('user')) || null;
@@ -637,23 +642,6 @@ if(otpModalEl) otpModalObserver.observe(otpModalEl, { attributes: true });
 function showLoader(show, message = 'দয়া করে অপেক্ষা করুন...') { 
     document.getElementById('globalLoader').style.display = show ? 'flex' : 'none';
     document.getElementById('globalLoader').querySelector('p').innerText = message;
-}
-
-// এডিট মোডের জন্য আপডেটেড ফাংশন
-function submitAdToServer(adPayload, actionName) {
-    showLoader(true, 'সার্ভারে আপডেট করা হচ্ছে...');
-    google.script.run.withSuccessHandler(res => {
-        showLoader(false);
-        if (res.success) {
-            cachedUserAds = null; 
-            Swal.fire({ icon: 'success', title: 'সফল!', text: res.message, timer: 2000, showConfirmButton: false });
-            resetAdForm();
-            showView('accountView'); // এডিট করার পর অ্যাকাউন্ট পেজে ফেরত পাঠানো হলো
-        } else { Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.error }); }
-    }).withFailureHandler(err => { 
-        showLoader(false); 
-        Swal.fire({ icon: 'error', title: 'সার্ভার এরর', text: err }); 
-    })[actionName](adPayload, sessionToken);
 }
 
 // হেডারের নিচে টেক্সট লোডার কন্ট্রোলার
@@ -1504,7 +1492,25 @@ function submitAdToServer(adPayload, actionName) {
             cachedUserAds = null; 
             Swal.fire({ icon: 'success', title: 'সফল!', text: res.message, timer: 2000, showConfirmButton: false });
             resetAdForm();
-        } else { Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.error }); }
+            
+            // ✅ এই লাইনটি যোগ করতে হবে যাতে এডিটের পর অ্যাকাউন্ট পেজে ফিরে যায়
+            showView('accountView'); 
+            
+            // ✅ আরও ভালো ইউজার এক্সপেরিয়েন্সের জন্য "আমার বিজ্ঞাপন" ড্রয়ারটি অটোমেটিক খুলে দেওয়া হলো
+            setTimeout(() => {
+                const listContainer = document.getElementById('myAdsListContainer');
+                const arrow = document.getElementById('myAdsArrow');
+                if (listContainer.classList.contains('hidden')) {
+                    listContainer.classList.remove('hidden');
+                    arrow.classList.remove('fa-chevron-down');
+                    arrow.classList.add('fa-chevron-up');
+                }
+                loadUserAds();
+            }, 300);
+            
+        } else { 
+            Swal.fire({ icon: 'error', title: 'ব্যর্থ', text: res.error }); 
+        }
     }).withFailureHandler(err => { 
         showLoader(false); 
         Swal.fire({ icon: 'error', title: 'সার্ভার এরর', text: err }); 
@@ -2038,8 +2044,8 @@ function loadUserRequests() {
         // নেটওয়ার্ক এরর হলেও আটকে থাকবে না
         cachedUserRequests = [];
         renderUserRequestsList(cachedUserRequests);
-    }).getUserRequests(currentUser.mobilenumber, sessionToken);
-}
+// ✅ ঠিক - ৩টি আর্গুমেন্ট পাঠাচ্ছে
+}).getUserRequests(currentUser.mobilenumber, sessionToken, currentUser.email);
 
 function toggleMyRequests() {
     const listContainer = document.getElementById('myRequestsListContainer');
